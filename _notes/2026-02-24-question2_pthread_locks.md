@@ -6,115 +6,98 @@ date: 2026-02-24
 
 ## Overview
 
-This lab task requires you to fix a buggy `pthread`-based C program by adding the missing `pthread_mutex_lock()` and `pthread_mutex_unlock()` calls to eliminate **race conditions** and prevent **deadlocks**.
+This lab task requires you to fix a buggy `pthread`-based C program by adding missing mutex lock/unlock calls to eliminate **race conditions** and prevent **deadlocks**.
 
 ---
 
 ## Understanding the Problem
 
-### What the Program Does
+### What is Given
 
-The program has **three threads** sharing two global resources:
+You are provided with `notxv6/pthread_locks.c` — a program with:
 
-| Thread | Behaviour |
-|---|---|
-| `worker_AB` | Locks A → updates A → Locks B → updates B (A then B order) |
-| `worker_BA` | Locks B → updates B → Locks A → updates A (B then A order) |
-| `worker_monitor` | Periodically reads/adjusts both resources, sets `done` flag |
+| Issue | Description |
+|-------|-------------|
+| **Race Condition** | Multiple threads access shared variables (`resourceA`, `resourceB`, `total_ops`, `done`) without synchronization |
+| **Potential Deadlock** | If locks are acquired in inconsistent order (e.g., Thread 1 holds lockA and waits for lockB, while Thread 2 holds lockB and waits for lockA) |
 
-### Shared Global Variables
+### Shared Resources and Their Guards
 
-| Variable | Protected By |
-|---|---|
+| Shared Variable | Protecting Mutex |
+|----------------|-----------------|
 | `resourceA` | `lockA` |
 | `resourceB` | `lockB` |
-| `total_ops` | Both locks (accessed when holding both) |
-| `done` | Both locks (accessed when holding both) |
+| `total_ops` | Both (accessed together with resources) |
+| `done` | Both (accessed by monitor thread) |
 
-### The Two Bugs Without Synchronisation
+### The Three Threads
 
-1. **Race Condition** — Multiple threads read/write `resourceA`, `resourceB`, `total_ops`, and `done` concurrently without any locks, causing undefined/corrupted values.
-2. **Potential Deadlock** — If locks are acquired in **inconsistent order** (Thread 1 holds `lockA` waiting for `lockB`, Thread 2 holds `lockB` waiting for `lockA`), a circular wait deadlock occurs.
+| Thread | Behaviour |
+|--------|-----------|
+| `worker_AB` | Locks A → updates A → Locks B → updates B → Unlocks both |
+| `worker_BA` | Must also Lock A first → then B (safe order!) |
+| `worker_monitor` | Reads/adjusts A and B, signals `done` |
 
 ---
 
-## Key Concepts
+## Key Concepts to Understand
 
 ### Race Condition
-> **⚠️ Warning:** A race condition occurs when two or more threads access a shared variable simultaneously and at least one access is a write, producing unpredictable results.
+A **race condition** occurs when two or more threads access a shared variable concurrently and at least one access is a write, without any synchronization.
 
-### Deadlock (Dining Philosophers style)
-> **⚠️ Warning:** Deadlock happens when Thread 1 holds Lock A waiting for Lock B, while Thread 2 holds Lock B waiting for Lock A — neither can proceed.
+```
+Thread 1: reads resourceA (value = 5)
+Thread 2: reads resourceA (value = 5)
+Thread 1: writes resourceA = 6
+Thread 2: writes resourceA = 6   ← Lost update! Should be 7
+```
 
-### The Fix: Global Lock Ordering (Lock Hierarchy)
+### Deadlock — The Classic Problem
 
-The universally accepted solution to prevent deadlock with multiple locks is to **always acquire locks in the same global order**.
+> **⚠️ Warning:** The most common mistake here is using **inconsistent lock ordering**. If `worker_AB` locks `lockA` then `lockB`, but `worker_BA` locks `lockB` then `lockA`, a deadlock can occur intermittently.
 
-**Rule:** Always lock `lockA` **before** `lockB`, regardless of which thread you are in.
+```
+worker_AB acquires lockA, waiting for lockB...
+worker_BA acquires lockB, waiting for lockA...
+>>> DEADLOCK: Both threads waiting forever <<<
+```
 
-This eliminates circular wait — one of the four necessary conditions for deadlock.
+### The Fix: Consistent Lock Ordering (Lock Hierarchy)
 
-> **💡 Hint:** Even `worker_BA` (which logically updates B then A) must **still acquire lockA first**, then lockB, to maintain consistent lock ordering. It can update B first inside the critical section — the key is the *acquisition order*, not the update order.
+The golden rule to prevent deadlock with multiple mutexes:
+
+> **💡 Hint:** **Always acquire locks in the same global order.** If every thread that needs both `lockA` and `lockB` always acquires `lockA` first and `lockB` second, deadlock is impossible.
 
 ---
 
-## Step-by-Step Fix
+## The Solution — Fixed `pthread_locks.c`
 
-### Step 1 — Identify Every Access to Shared Variables
-
-Go through the code and mark every line that reads or writes:
-- `resourceA`
-- `resourceB`
-- `total_ops`
-- `done`
-
-Each such access **must be inside a locked region**.
-
-### Step 2 — Apply the Lock Ordering Rule
-
-**Always: lock `lockA` first, then `lockB`**
-
-```
-pthread_mutex_lock(&lockA);
-pthread_mutex_lock(&lockB);
-// ... critical section accessing resourceA, resourceB, total_ops, done ...
-pthread_mutex_unlock(&lockB);
-pthread_mutex_unlock(&lockA);
-```
-
-Unlock in **reverse order** (LIFO) — this is best practice though not strictly required by pthreads.
-
-### Step 3 — Fix Each Thread Function
-
----
-
-## The Fixed Code: `notxv6/pthread_locks.c`
-
-Below is the complete corrected program with all mutex lock/unlock calls added and annotated:
+Below is the complete fixed program with all missing `pthread_mutex_lock()` / `pthread_mutex_unlock()` calls added and annotated.
 
 ```c
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <pthread.h>
-#include <unistd.h>
+#include <unistd.h>   // for sleep()
 
-// ─── Shared global resources ─────────────────────────────────────────────────
+// ─── Shared global resources ────────────────────────────────────────────────
 static int resourceA   = 0;
 static int resourceB   = 0;
 static int total_ops   = 0;
 static int done        = 0;
 
-// ─── Two provided mutexes — DO NOT add new ones ───────────────────────────────
+// ─── Two mutexes — one per resource ─────────────────────────────────────────
+// RULE: always acquire lockA BEFORE lockB to prevent deadlock
 static pthread_mutex_t lockA = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t lockB = PTHREAD_MUTEX_INITIALIZER;
 
-// ─── Parameter struct passed from main() to each thread ──────────────────────
+// ─── Parameter struct (passed FROM main TO each thread) ─────────────────────
 typedef struct {
-    int thread_id;
+    int id;
     int iterations;
 } thread_args_t;
 
-// ─── Result struct heap-allocated by each thread, returned to main() ─────────
+// ─── Result struct (heap-allocated, returned FROM thread TO main) ────────────
 typedef struct {
     int ops;
     int lastA;
@@ -123,10 +106,10 @@ typedef struct {
     int lastDone;
 } thread_result_t;
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
 // worker_AB: updates resourceA then resourceB
-// LOCK ORDER: always lockA → lockB  (safe, consistent with global order)
-// ─────────────────────────────────────────────────────────────────────────────
+//   Lock order: lockA → lockB  (consistent global order)
+// ════════════════════════════════════════════════════════════════════════════
 void *worker_AB(void *arg)
 {
     thread_args_t   *params = (thread_args_t *)arg;
@@ -135,34 +118,34 @@ void *worker_AB(void *arg)
     result->ops = 0;
 
     for (int i = 0; i < params->iterations; i++) {
-        // Acquire BOTH locks in global order: lockA first, then lockB
-        pthread_mutex_lock(&lockA);
-        pthread_mutex_lock(&lockB);
 
-        // ── Critical section ─────────────────────────
+        // FIX: acquire lockA first, then lockB (consistent order)
+        pthread_mutex_lock(&lockA);   // <── ADDED
+        pthread_mutex_lock(&lockB);   // <── ADDED
+
         resourceA++;
         resourceB++;
         total_ops++;
         result->ops++;
+
         result->lastA        = resourceA;
         result->lastB        = resourceB;
         result->lastTotalOps = total_ops;
         result->lastDone     = done;
-        // ── End critical section ──────────────────────
 
-        // Release in reverse order
-        pthread_mutex_unlock(&lockB);
-        pthread_mutex_unlock(&lockA);
+        pthread_mutex_unlock(&lockB); // <── ADDED (release in reverse order)
+        pthread_mutex_unlock(&lockA); // <── ADDED
     }
 
     return result;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// worker_BA: logically updates resourceB then resourceA
-// LOCK ORDER: still lockA → lockB  ← KEY FIX to prevent deadlock
-//             (update order inside critical section is B then A — that's fine)
-// ─────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// worker_BA: updates resourceB then resourceA
+//   Lock order: lockA → lockB  (SAME consistent global order — key fix!)
+//   Even though this thread "logically" does B then A, it still acquires
+//   lockA first to maintain the global ordering and avoid deadlock.
+// ════════════════════════════════════════════════════════════════════════════
 void *worker_BA(void *arg)
 {
     thread_args_t   *params = (thread_args_t *)arg;
@@ -171,34 +154,35 @@ void *worker_BA(void *arg)
     result->ops = 0;
 
     for (int i = 0; i < params->iterations; i++) {
-        // Acquire BOTH locks in global order: lockA first, then lockB
-        // (even though we update B before A — lock ORDER must be consistent)
-        pthread_mutex_lock(&lockA);
-        pthread_mutex_lock(&lockB);
 
-        // ── Critical section ─────────────────────────
-        // Update B first (logical order preserved inside critical section)
+        // FIX: MUST also acquire lockA first, then lockB
+        //      even though we conceptually "do B then A"
+        //      This consistent ordering prevents deadlock.
+        pthread_mutex_lock(&lockA);   // <── ADDED (lockA FIRST always)
+        pthread_mutex_lock(&lockB);   // <── ADDED (lockB SECOND always)
+
         resourceB++;
         resourceA++;
         total_ops++;
         result->ops++;
+
         result->lastA        = resourceA;
         result->lastB        = resourceB;
         result->lastTotalOps = total_ops;
         result->lastDone     = done;
-        // ── End critical section ──────────────────────
 
-        pthread_mutex_unlock(&lockB);
-        pthread_mutex_unlock(&lockA);
+        pthread_mutex_unlock(&lockB); // <── ADDED
+        pthread_mutex_unlock(&lockA); // <── ADDED
     }
 
     return result;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// worker_monitor: periodically reads and adjusts resources, sets done flag
-// LOCK ORDER: lockA → lockB  (consistent with global order)
-// ─────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// worker_monitor: periodically reads and sometimes adjusts resources,
+//                 then signals done = 1 when total_ops reaches the target.
+//   Lock order: lockA → lockB  (same consistent global order)
+// ════════════════════════════════════════════════════════════════════════════
 void *worker_monitor(void *arg)
 {
     thread_args_t   *params = (thread_args_t *)arg;
@@ -206,71 +190,72 @@ void *worker_monitor(void *arg)
 
     result->ops = 0;
 
-    // Monitor loops until done is set
+    // Monitor loops until done is signalled
     while (1) {
-        usleep(100000);  // sleep 100 ms between checks
 
-        // Acquire BOTH locks in global order for a consistent snapshot
-        pthread_mutex_lock(&lockA);
-        pthread_mutex_lock(&lockB);
+        sleep(1); // wait between snapshots
 
-        // ── Critical section ─────────────────────────
+        // FIX: acquire both locks to safely read/modify shared state
+        pthread_mutex_lock(&lockA);   // <── ADDED
+        pthread_mutex_lock(&lockB);   // <── ADDED
+
+        // Safe (consistent) snapshot
         printf("[monitor] A=%d B=%d total_ops=%d done=%d\n",
                resourceA, resourceB, total_ops, done);
 
-        // Save snapshot into result
+        // Record last seen values into result
         result->lastA        = resourceA;
         result->lastB        = resourceB;
         result->lastTotalOps = total_ops;
         result->lastDone     = done;
 
-        int current_done = done;   // read while holding lock
-        // ── End critical section ──────────────────────
-
-        pthread_mutex_unlock(&lockB);
-        pthread_mutex_unlock(&lockA);
-
-        if (current_done) {
-            break;   // exit loop only after releasing locks
+        // Signal termination once both workers have finished
+        if (total_ops >= params->iterations * 2) {
+            done = 1;  // FIX: written inside the lock — no race
         }
+
+        pthread_mutex_unlock(&lockB); // <── ADDED
+        pthread_mutex_unlock(&lockA); // <── ADDED
+
+        // FIX: read done AFTER releasing locks; it's fine here because
+        //      we only read it to decide whether to exit the loop.
+        //      A final lock+read would also be acceptable.
+        pthread_mutex_lock(&lockA);   // <── ADDED
+        int local_done = done;
+        pthread_mutex_unlock(&lockA); // <── ADDED
+
+        if (local_done) break;
     }
 
     return result;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// main: creates threads, waits for them, signals done, prints results
-// ─────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// main
+// ════════════════════════════════════════════════════════════════════════════
 int main(void)
 {
     pthread_t t1, t2, t3;
 
-    // Set up arguments for each thread
-    thread_args_t args1 = { .thread_id = 1, .iterations = 40000 };
-    thread_args_t args2 = { .thread_id = 2, .iterations = 40000 };
-    thread_args_t args3 = { .thread_id = 3, .iterations = 0     };
+    // Heap-allocate args for each thread
+    thread_args_t *args1 = malloc(sizeof(thread_args_t));
+    thread_args_t *args2 = malloc(sizeof(thread_args_t));
+    thread_args_t *args3 = malloc(sizeof(thread_args_t));
 
-    // Create all three threads
-    pthread_create(&t1, NULL, worker_AB,      &args1);
-    pthread_create(&t2, NULL, worker_BA,      &args2);
-    pthread_create(&t3, NULL, worker_monitor, &args3);
+    args1->id = 1;  args1->iterations = 40000;
+    args2->id = 2;  args2->iterations = 40000;
+    args3->id = 3;  args3->iterations = 80000; // monitor checks for 80000 total
 
-    // Wait for worker_AB and worker_BA to finish
+    pthread_create(&t1, NULL, worker_AB,      args1);
+    pthread_create(&t2, NULL, worker_BA,      args2);
+    pthread_create(&t3, NULL, worker_monitor, args3);
+
+    // Collect heap-allocated result structs
     thread_result_t *r1, *r2, *r3;
     pthread_join(t1, (void **)&r1);
     pthread_join(t2, (void **)&r2);
-
-    // Signal monitor to stop (must be done under locks)
-    pthread_mutex_lock(&lockA);
-    pthread_mutex_lock(&lockB);
-    done = 1;
-    pthread_mutex_unlock(&lockB);
-    pthread_mutex_unlock(&lockA);
-
-    // Wait for monitor to finish
     pthread_join(t3, (void **)&r3);
 
-    // Print results
     printf("--- Results (returned to main) ---\n");
     printf("Thread 1 ops=%d lastA=%d lastB=%d lastTotalOps=%d lastDone=%d\n",
            r1->ops, r1->lastA, r1->lastB, r1->lastTotalOps, r1->lastDone);
@@ -283,10 +268,8 @@ int main(void)
            resourceA, resourceB, total_ops, done);
     printf("Expected: total_ops=80000 done=1\n");
 
-    // Free heap-allocated results
-    free(r1);
-    free(r2);
-    free(r3);
+    free(args1); free(args2); free(args3);
+    free(r1);    free(r2);    free(r3);
 
     return 0;
 }
@@ -294,66 +277,111 @@ int main(void)
 
 ---
 
-## Why This Fix Works
+## Step-by-Step Explanation of Every Fix
 
-### Deadlock Prevention — Lock Ordering
+### Fix 1 — `worker_AB`: Add Lock/Unlock Around Critical Section
 
+```c
+// BEFORE (buggy — no locks):
+resourceA++;
+resourceB++;
+total_ops++;
+
+// AFTER (fixed):
+pthread_mutex_lock(&lockA);   // Step 1: acquire lockA
+pthread_mutex_lock(&lockB);   // Step 2: acquire lockB
+resourceA++;                  // Step 3: safely modify A
+resourceB++;                  // Step 4: safely modify B
+total_ops++;                  // Step 5: safely update counter
+pthread_mutex_unlock(&lockB); // Step 6: release lockB first
+pthread_mutex_unlock(&lockA); // Step 7: release lockA
 ```
-worker_AB:      lockA → lockB  ✅
-worker_BA:      lockA → lockB  ✅  (NOT lockB → lockA!)
-worker_monitor: lockA → lockB  ✅
-main (done=1):  lockA → lockB  ✅
-```
 
-All threads acquire locks in the **same global order**: `lockA` first, `lockB` second.
-
-This breaks the **circular wait** condition — a thread can only wait for `lockB` if it already holds `lockA`. No thread ever holds `lockB` and waits for `lockA`, so a deadlock cycle is impossible.
-
-### Race Condition Prevention
-
-| Shared Variable | Protected By |
-|---|---|
-| `resourceA` | `lockA` (held before any access) |
-| `resourceB` | `lockB` (held before any access) |
-| `total_ops` | Both locks held simultaneously |
-| `done` | Both locks held simultaneously |
-
-Every read and write of shared variables occurs **inside** a `lock()` / `unlock()` pair.
+> **💡 Hint:** Always release locks in **reverse order** of acquisition. If you lock A→B, unlock B→A. This is good practice (though not strictly required for correctness here).
 
 ---
 
-## Common Mistakes to Avoid
+### Fix 2 — `worker_BA`: Use the SAME Lock Order as `worker_AB`
 
-> **⚠️ Warning:** Do NOT acquire locks in different orders in different threads. This is the #1 cause of deadlock.
-> ```c
-> // BAD — worker_BA acquires in reverse order → potential deadlock
-> pthread_mutex_lock(&lockB);  // ← WRONG
-> pthread_mutex_lock(&lockA);
-> ```
+This is the **most critical fix** to prevent deadlock.
 
-> **⚠️ Warning:** Do NOT read `done` outside a lock — it is a shared variable written by `main()` from a different thread.
-> ```c
-> // BAD — reading done without holding the lock
-> while (!done) { ... }   // ← race condition on 'done'
-> ```
+```c
+// WRONG (causes intermittent deadlock):
+pthread_mutex_lock(&lockB);   // worker_BA locks B first
+pthread_mutex_lock(&lockA);   // then waits for A
+// Meanwhile worker_AB locked A and is waiting for B → DEADLOCK!
 
-> **⚠️ Warning:** Do NOT forget to `free()` the heap-allocated result structs returned by threads — this causes memory leaks.
+// CORRECT (consistent global order — lockA always first):
+pthread_mutex_lock(&lockA);   // lockA FIRST (even in worker_BA!)
+pthread_mutex_lock(&lockB);   // lockB SECOND
+resourceB++;
+resourceA++;
+total_ops++;
+pthread_mutex_unlock(&lockB);
+pthread_mutex_unlock(&lockA);
+```
 
-> **⚠️ Warning:** Do NOT add new mutexes, semaphores, or condition variables — the task constraints prohibit this.
+> **⚠️ Warning:** This is the trap the question is testing. Even though `worker_BA` conceptually processes B before A, **the mutex acquisition order must still be lockA → lockB**. The mutex order controls thread scheduling, not the order of your arithmetic operations.
 
 ---
 
-## Build and Test Instructions
+### Fix 3 — `worker_monitor`: Lock Both Before Reading/Writing Shared State
 
-### Compile and Run
+```c
+// BEFORE (buggy — reading without locks gives inconsistent snapshot):
+printf("[monitor] A=%d B=%d total_ops=%d done=%d\n",
+       resourceA, resourceB, total_ops, done);
+
+// AFTER (fixed — consistent snapshot under both locks):
+pthread_mutex_lock(&lockA);
+pthread_mutex_lock(&lockB);
+printf("[monitor] A=%d B=%d total_ops=%d done=%d\n",
+       resourceA, resourceB, total_ops, done);
+if (total_ops >= target) {
+    done = 1;   // write to done safely inside lock
+}
+pthread_mutex_unlock(&lockB);
+pthread_mutex_unlock(&lockA);
+```
+
+> **💡 Hint:** The monitor must hold **both** locks when reading `resourceA`, `resourceB`, `total_ops`, and `done` because the worker threads update all of them together inside a dual-lock section. Reading them without locks could give you a torn/inconsistent snapshot.
+
+---
+
+## Deadlock Prevention — Theory Summary
+
+### Coffman's Four Conditions for Deadlock
+
+All four must hold simultaneously for deadlock to occur:
+
+| Condition | Meaning | How We Break It |
+|-----------|---------|----------------|
+| **Mutual Exclusion** | Resource held exclusively | Cannot eliminate (mutexes need this) |
+| **Hold and Wait** | Thread holds one lock while waiting for another | Could allocate all at once, but we use ordering instead |
+| **No Preemption** | Locks cannot be forcibly taken | Cannot eliminate easily |
+| **Circular Wait** | Thread A waits for B, B waits for A | ✅ **We break this with consistent lock ordering** |
+
+> **💡 Hint:** By enforcing **Lock Hierarchy** (always lockA before lockB), we eliminate the **Circular Wait** condition, which breaks the deadlock possibility entirely.
+
+---
+
+## Building and Testing
+
+### Step 1: Compile
 
 ```bash
 cd notxv6/
 make pthread_locks
+# Output: cc pthread_locks.c -o pthread_locks
+```
+
+### Step 2: Run Once to Check Output
+
+```bash
 ./pthread_locks
 ```
 
-### Expected Output
+**Expected output:**
 
 ```
 [monitor] A=29943 B=29943 total_ops=40000 done=0
@@ -362,62 +390,90 @@ make pthread_locks
 --- Results (returned to main) ---
 Thread 1 ops=40000 lastA=59248 lastB=59248 lastTotalOps=79248 lastDone=0
 Thread 2 ops=40000 lastA=60000 lastB=60000 lastTotalOps=80000 lastDone=0
-Thread 3 ops=0 lastA=60000 lastB=60000 lastTotalOps=80000 lastDone=1
+Thread 3 ops=0     lastA=60000 lastB=60000 lastTotalOps=80000 lastDone=1
 Final Shared: A=60000 B=60000 total_ops=80000 done=1
 Expected: total_ops=80000 done=1
 ```
 
-> **💡 Hint:** The exact intermediate values (e.g., `A=29943`) may differ each run — that is normal. What must be consistent is the **final** `total_ops=80000` and `done=1`.
+> **⚠️ Warning:** Intermediate values (like `A=29943`) may vary between runs — that is **normal**. What matters is that the **final values are always correct**: `A=60000 B=60000 total_ops=80000 done=1`.
 
-### Run the Optional Test (20 iterations)
+### Step 3: Run Optional Test Script (20 repetitions)
 
 ```bash
-cd notxv6/
 ./optional_test
 # Expected: PASS
 ```
 
-### Run the Grade Script
+### Step 4: Run Grade Script
 
 ```bash
 cd ..
 ./grade-quiz pthread_locks
-# Expected: pthread_locks_test: OK
+# Expected:
+# == Test pthread_locks_test ==
+# pthread_locks_test: OK (28.1s)
 ```
 
-### Run Full Make Grade
+### Step 5: Full Grade with Clean Build
 
 ```bash
 make clean && make grade
-# Expected: Score: 1/1
+# Expected:
+# pthread_locks_test: OK (28.1s)
+# Score: 1/1
 ```
 
----
-
-## Submission Steps
+### Step 6: Submit
 
 ```bash
-# 1. Verify everything passes
-make clean && make grade
-
-# 2. Create the zip file using make (NOT Windows/macOS zip tools)
 make zipball
-
-# 3. Submit lab.zip to Gradescope assignment:
-#    "xv6labs-quiz2-q2-pthread"
+# Submit lab.zip to Gradescope: xv6labs-quiz2-q2-pthread
 ```
 
-> **⚠️ Warning:** Always use `make zipball` to create your submission zip. Using Windows Explorer or macOS Files App zip will create nested directory structures that break the autograder.
+> **⚠️ Warning:** Use `make zipball` — **do NOT** use Windows zip, WinRAR, or macOS Files App. These can create nested directory structures that break the autograder.
 
 ---
 
-## Summary Cheat Sheet
+## Correctness Checklist
 
-| Concept | Solution Applied |
-|---|---|
-| Race condition on `resourceA` | Wrap all accesses with `lockA` |
-| Race condition on `resourceB` | Wrap all accesses with `lockB` |
-| Race condition on `total_ops`, `done` | Wrap all accesses with both locks |
-| Deadlock between `worker_AB` and `worker_BA` | Enforce global lock order: always `lockA → lockB` |
-| Consistent monitor snapshot | Acquire both locks before reading any shared variable |
-| Setting `done` from `main()` | Acquire both locks before writing `done = 1` |
+Before submitting, verify all of the following:
+
+- [ ] `resourceA` is **always** accessed inside `pthread_mutex_lock(&lockA)`
+- [ ] `resourceB` is **always** accessed inside `pthread_mutex_lock(&lockB)`
+- [ ] `total_ops` is accessed inside both locks (since workers update it alongside both resources)
+- [ ] `done` is read/written inside locks
+- [ ] **Both** `worker_AB` and `worker_BA` acquire locks in the **same order**: `lockA` → `lockB`
+- [ ] Every `pthread_mutex_lock()` has a matching `pthread_mutex_unlock()` on every code path
+- [ ] No new mutexes, semaphores, or condition variables were added
+- [ ] Program always terminates (no infinite loop, no deadlock)
+- [ ] Final output shows `total_ops=80000 done=1` consistently across 20 runs
+
+---
+
+## Common Mistakes to Avoid
+
+> **⚠️ Warning — Mistake 1:** Locking `lockB` before `lockA` in `worker_BA`.
+> This creates a circular wait with `worker_AB` and causes intermittent deadlock.
+
+> **⚠️ Warning — Mistake 2:** Only locking one mutex when accessing variables guarded by both.
+> If `total_ops` is updated inside only `lockA` but read by the monitor inside both locks, you may still get races.
+
+> **⚠️ Warning — Mistake 3:** Forgetting to unlock on early `return` or `break` paths.
+> Always ensure unlock is called on every exit path from a critical section.
+
+> **⚠️ Warning — Mistake 4:** Reading `done` outside of any lock in the monitor loop to decide whether to break.
+> Always copy `done` to a local variable inside a lock, then use the local copy for control flow.
+
+---
+
+## Summary Table — All Lock Additions
+
+| Location | Lock Added | Purpose |
+|----------|-----------|---------|
+| `worker_AB` loop body start | `lock(&lockA)`, `lock(&lockB)` | Protect A, B, total_ops, done reads |
+| `worker_AB` loop body end | `unlock(&lockB)`, `unlock(&lockA)` | Release in reverse order |
+| `worker_BA` loop body start | `lock(&lockA)`, `lock(&lockB)` | **Same order as AB** — prevents deadlock |
+| `worker_BA` loop body end | `unlock(&lockB)`, `unlock(&lockA)` | Release in reverse order |
+| `worker_monitor` snapshot section | `lock(&lockA)`, `lock(&lockB)` | Consistent read of all shared vars |
+| `worker_monitor` snapshot section end | `unlock(&lockB)`, `unlock(&lockA)` | Release after snapshot |
+| `worker_monitor` loop condition check | `lock(&lockA)`, read `done`, `unlock(&lockA)` | Safe read of `done` for loop exit |
