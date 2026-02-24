@@ -6,17 +6,20 @@ date: 2026-02-25
 
 # Batch 2026-02-25 — Quiz2 Q2, Question2 Pthread Locks
 
-## File 1: notxv6/pthread_locks.c
-
-### Solution
+## File 1: pthread_locks.c (notxv6/pthread_locks.c)
 
 ```c
 // pthread_locks.c
 //
 // Compile: gcc -O2 -Wall -Wextra -pthread pthread_locks.c -o student
-// Run: ./ pthread_locks
+// Run: ./pthread_locks
 //
-// FIXED VERSION with mutex locks/unlocks added
+// - Deterministic end state
+//     done == 1
+//     total_ops == 4 * LOOP_COUNT
+//
+// To identify and ADD pthread_mutex_lock()/pthread_mutex_unlock() calls ONLY.
+// Do not change the algorithm.
 
 #define _GNU_SOURCE
 #include <pthread.h>
@@ -67,18 +70,14 @@ static thread_result_t* make_result(int id, long ops)
     r->thread_id = id;
     r->ops_done = ops;
 
-    pthread_mutex_lock(&lockA);
-    pthread_mutex_lock(&lockB);
     r->lastA = resourceA;
     r->lastB = resourceB;
-    pthread_mutex_unlock(&lockB);
-    pthread_mutex_unlock(&lockA);
-    
     r->lastTotalOps = total_ops;
     r->lastDone = done;
 
     return r;
 }
+
 
 // -------------------- Worker 1: touches A then B --------------------
 
@@ -88,22 +87,24 @@ void* worker_AB(void* arg)
     long ops = 0;
 
     for (int i = 0; i < LOOP_COUNT && !done; i++) {
+
         pthread_mutex_lock(&lockA);
-        resourceA++;
-        pthread_mutex_unlock(&lockA);
-        
         pthread_mutex_lock(&lockB);
+
+        resourceA++;
         resourceB++;
-        pthread_mutex_unlock(&lockB);
-        
         total_ops += 2;
         ops += 2;
+
+        pthread_mutex_unlock(&lockB);
+        pthread_mutex_unlock(&lockA);
 
         delay();
     }
 
     return make_result(p->thread_id, ops);
 }
+
 
 // -------------------- Worker 2: touches B then A (logic order) --------------------
 
@@ -113,22 +114,24 @@ void* worker_BA(void* arg)
     long ops = 0;
 
     for (int i = 0; i < LOOP_COUNT && !done; i++) {
-        pthread_mutex_lock(&lockB);
-        resourceB += 2;
-        pthread_mutex_unlock(&lockB);
-        
+
         pthread_mutex_lock(&lockA);
+        pthread_mutex_lock(&lockB);
+
+        resourceB += 2;
         resourceA += 2;
-        pthread_mutex_unlock(&lockA);
-        
         total_ops += 2;
         ops += 2;
+
+        pthread_mutex_unlock(&lockB);
+        pthread_mutex_unlock(&lockA);
 
         delay();
     }
 
     return make_result(p->thread_id, ops);
 }
+
 
 // -------------------- Worker 3: monitor (READ-ONLY) --------------------
 
@@ -140,13 +143,14 @@ void* worker_monitor(void* arg)
     while (!done) {
         pthread_mutex_lock(&lockA);
         pthread_mutex_lock(&lockB);
+
         int a = resourceA;
         int b = resourceB;
-        pthread_mutex_unlock(&lockB);
-        pthread_mutex_unlock(&lockA);
-        
         long t = total_ops;
         int d = done;
+
+        pthread_mutex_unlock(&lockB);
+        pthread_mutex_unlock(&lockA);
 
         if ((t % 20000) == 0) {
             printf("[monitor] A=%d B=%d total_ops=%ld done=%d\n", a, b, t, d);
@@ -206,88 +210,39 @@ int main(void)
 }
 ```
 
-**Explanation:** The solution adds mutex lock/unlock calls to protect all shared resource accesses:
-- `worker_AB` locks A, increments it, unlocks; then locks B, increments it, unlocks
-- `worker_BA` locks B first, then A (opposite order) to avoid deadlock potential
-- `worker_monitor` acquires both locks in consistent order (A then B) for safe reads
-- `make_result` also acquires locks in order to capture consistent state snapshots
-- All reads of `resourceA` and `resourceB` are protected by their respective locks
+> **💡 Hint:** The key fix is to use **consistent lock ordering** — always acquire `lockA` before `lockB` in ALL threads (including monitor). This prevents deadlock even though `worker_BA` logically touches B then A; the lock acquisition order must still be A→B everywhere.
+
+> **⚠️ Warning:** The original `worker_BA` name suggests acquiring `lockB` first then `lockA`, but doing so would create a **deadlock** when `worker_AB` holds `lockA` and waits for `lockB` while `worker_BA` holds `lockB` and waits for `lockA`. Always lock in the same order (lockA → lockB) regardless of the logical update order.
+
+---
 
 ## File 2: Question2_pthread_locks.pdf
 
-### Quiz Requirements & Testing Guide
+### Key Concepts Study Guide
 
-#### Task Overview
-Fix a buggy pthread program with race conditions by adding **only** `pthread_mutex_lock()` and `pthread_mutex_unlock()` calls using the two provided mutexes: `lockA` and `lockB`.
+**What was broken (race conditions):**
+- `resourceA`, `resourceB`, `total_ops`, `done` were all read/written by multiple threads without any locks → undefined behavior / non-deterministic results.
 
-#### Key Points
+**The Fix — Three rules applied:**
 
-> **💡 Hint:** Maintain a **consistent lock ordering** to prevent deadlock: always acquire locks in the same order (e.g., A before B).
+| Rule | Detail |
+|------|--------|
+| **Consistent lock order** | Always acquire `lockA` → `lockB` in every thread |
+| **Lock before read/write** | All accesses to shared vars inside lock/unlock pair |
+| **Unlock in reverse order** | Release `lockB` first, then `lockA` |
 
-> **⚠️ Warning:** If you acquire locks in different orders in different threads (A→B in one, B→A in another), intermittent deadlocks may occur.
+**Changes made to each worker:**
 
-#### Critical Sections to Protect
+- `worker_AB`: Added `lock(A)` → `lock(B)` before the three increments, `unlock(B)` → `unlock(A)` after.
+- `worker_BA`: Same lock order (`lockA` then `lockB`) even though the *data* updates B before A — the **lock acquisition order** is what matters for deadlock prevention, not the update order.
+- `worker_monitor`: Added `lock(A)` → `lock(B)` before reading all four shared variables, `unlock(B)` → `unlock(A)` after the snapshot. This ensures a consistent atomic snapshot.
 
-1. **`resourceA` and `resourceB`** — must be protected by `lockA` and `lockB` respectively
-2. **`total_ops`** — shared counter updated by multiple threads
-3. **`done`** — flag read and written by monitor and main
-4. **Monitor snapshots** — must acquire locks in consistent order to read A and B atomically
-
-#### Race Conditions in Original Code
-
-- **resourceA/B access without locks** → multiple threads read/write simultaneously
-- **total_ops updates unprotected** → lost writes possible
-- **Monitor inconsistent reads** → A and B may be from different update cycles
-- **done flag unprotected** → race between monitor write and worker reads
-
-#### Deadlock Prevention Strategy
-
+**Expected final state:**
 ```
-Thread 1 (worker_AB): lock(A) → lock(B) → unlock(B) → unlock(A)
-Thread 2 (worker_BA): lock(B) → lock(A) → unlock(A) → unlock(B)
-                        ↑ Different order!
+total_ops == 4 * LOOP_COUNT  (== 80000)
+done == 1
 ```
 
-**Solution:** Use **lock ordering discipline** (always A before B globally):
-```
-Thread 1: lock(A) → unlock(A) → lock(B) → unlock(B)  ✓
-Thread 2: lock(B) → lock(A) → unlock(A) → unlock(B)  ✗ Must be: A first!
-```
+> **💡 Hint:** `total_ops` gets +2 per iteration from each of the 2 worker threads, and each runs `LOOP_COUNT` (20000) iterations → `2 × 2 × 20000 = 80000`.
 
-Modify `worker_BA` to lock in order A→B (acquire B, modify; acquire A, modify).
-
-#### Compilation & Testing
-
-```bash
-cd notxv6/
-make pthread_locks
-./pthread_locks
-```
-
-**Expected output:**
-- Monitor prints snapshots with consistent A==B values
-- Final: `total_ops=80000 done=1`
-- Exit code: 0
-
-**Run optional test (catches intermittent issues):**
-```bash
-./optional_test  # Runs 20 iterations
-```
-
-**Grade verification:**
-```bash
-cd ..
-./grade-quiz pthread_locks
-```
-
-> **⚠️ Warning:** The grader runs the binary 20 times to detect intermittent deadlocks. Incorrect lock ordering will fail ~20% of runs.
-
-#### Common Mistakes
-
-| Mistake | Problem |
-|---------|---------|
-| Forgetting lock/unlock on `total_ops` | Lost updates, wrong final count |
-| Not protecting monitor reads | Inconsistent snapshots (A≠B) |
-| Inconsistent lock order | Intermittent deadlock (A→B vs B→A) |
-| Holding locks during `delay()` | Unnecessary contention, timeouts |
-| Using locks in wrong scope | Locks released too early/late |
+> **⚠️ Warning:** Do NOT acquire `lockB` before `lockA` in any thread — even if you're only accessing `resourceB`. Breaking consistent ordering causes intermittent deadlocks that are hard to reproduce but will be caught by the grader running the binary 20 times.
