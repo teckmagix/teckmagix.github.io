@@ -4,124 +4,97 @@ title: "Question2 Pthread Locks"
 date: 2026-02-24
 ---
 
-## Lab Extension Task: pthread Deadlock & Race Condition
+## Lab Extension Task: pthread Deadlock & Race Condition Fix (4 marks)
 
-### Overview
+### Prerequisites
 
-This task requires fixing a buggy pthread-based C program that has race conditions and potential deadlock issues. You must add missing mutex lock/unlock calls to synchronize access to shared resources without introducing deadlocks.
+Download the "quiz2-q2.zip" file from:
+- **Location:** LMS/xSiTe folder → "Lab Quizzes (Prerequisites) / Quiz 2 / Question 2"
 
 ---
 
-## Task Description
+## Task Overview
 
-### Program Structure
+### Program Context
 
-The program simulates concurrent access to two shared global resources:
+You are given a buggy pthread-based C program (`notxv6/pthread_locks.c`) that simulates access to shared global resources with synchronization issues.
 
-| Component | Purpose |
-|-----------|---------|
-| **resourceA** | Shared resource protected by `lockA` |
-| **resourceB** | Shared resource protected by `lockB` |
-| **worker_AB** | Thread that updates A then B |
-| **worker_BA** | Thread that updates B then A |
-| **worker_monitor** | Thread that periodically reads both resources and signals termination via `done` flag |
+### Program Architecture
 
-### Key Issues to Fix
+#### Shared Resources
+- **resourceA** - protected by `lockA` mutex
+- **resourceB** - protected by `lockB` mutex
 
-1. **Race Conditions** — Shared variables accessed without synchronization:
+#### Thread Structure
+The program contains three worker threads:
+
+| Thread | Function | Operation |
+|--------|----------|-----------|
+| `worker_AB` | Updates A then B in sequence | Increments resourceA, then resourceB |
+| `worker_BA` | Updates B then A in sequence | Increments resourceB, then resourceA |
+| `worker_monitor` | Periodic reader and controller | Reads both resources, adjusts them, signals completion via `done` flag |
+
+#### Data Passing Mechanism
+- Threads receive parameters from `main()` via **struct pointer**
+- Threads return results via **heap-allocated result struct**
+
+### Current Issues
+
+The program suffers from:
+1. **Race conditions** - Shared variables accessed without synchronization:
    - `resourceA`
    - `resourceB`
    - `total_ops`
    - `done`
 
-2. **Deadlock Risk** — Incorrect lock ordering can cause deadlock between `worker_AB` and `worker_BA`
-
-3. **Inconsistent Reads** — Monitor thread must read resources atomically
-
-> **⚠️ Warning:** Adding locks in different orders in different threads (e.g., `worker_AB` locks A then B, but `worker_BA` locks B then A) **will cause deadlock**. You must enforce a consistent locking discipline across all threads.
+2. **Potential deadlocks** - If locks are added in incorrect/inconsistent order across threads, intermittent deadlocks can occur
 
 ---
 
 ## Task Requirements
 
+### Objective
+Add all missing `pthread_mutex_lock()` and `pthread_mutex_unlock()` calls to fix synchronization issues.
+
 ### Constraints
 
-- ✅ You **may only use** the two provided mutexes: `lockA` and `lockB`
-- ❌ Do **not** add new mutexes, semaphores, or condition variables
-- ✅ Must fix all data races on `resourceA`, `resourceB`, `total_ops`, `done`
-- ✅ Must never deadlock and always terminate
-- ✅ Monitor's snapshots must be taken safely (consistent reads)
+> **⚠️ Warning:** You have limited resources available!
+
+- **Only** two provided mutexes available:
+  - `lockA` (for resource A)
+  - `lockB` (for resource B)
+- Do **NOT** add new mutexes, semaphores, or condition variables
+- All synchronization must use only these two locks
 
 ### Correctness Requirements
 
 Your fixed program must satisfy:
 
-1. **No Data Races** — All shared variables protected by appropriate locks
-2. **No Deadlock** — Program always terminates without hanging
-3. **Consistency** — Monitor snapshots read resources atomically
+1. **No data races** on:
+   - `resourceA`
+   - `resourceB`
+   - `total_ops`
+   - `done`
 
-> **💡 Hint:** Enforce a **consistent global lock ordering**: always acquire `lockA` before `lockB`, and always release in reverse order (unlock `lockB` before `lockA`). This prevents circular wait conditions.
+2. **No deadlocks**
+   - Program must always terminate successfully
+   - No circular lock dependencies
 
----
+3. **Safe monitoring**
+   - Monitor's printed snapshots must be taken safely (consistent read)
+   - No partial reads across separate unlock/lock cycles
 
-## Solution Approach
-
-### Locking Discipline Strategy
-
-To prevent deadlock, follow this principle:
-
-**Always acquire locks in the same order and release in reverse order:**
-
-```
-Acquire order: lockA → lockB
-Release order: lockB → lockA
-```
-
-### Protected Sections
-
-| Thread | Critical Section | Locks Needed |
-|--------|------------------|--------------|
-| **worker_AB** | Read/Update A, then Read/Update B | `lockA`, then `lockB` |
-| **worker_BA** | Read/Update B, then Read/Update A | Must still use `lockA` then `lockB` (NOT B then A!) |
-| **worker_monitor** | Read A, Read B, possibly update `done` | Both `lockA` and `lockB` for consistent snapshot |
-| **Any thread** | Reading/Writing `total_ops`, `done` | Protected by one of the locks or both |
-
-### Pseudo-code Pattern
-
-```c
-// Pattern for worker_AB (updates A then B)
-pthread_mutex_lock(&lockA);
-  // ... update resourceA ...
-  pthread_mutex_lock(&lockB);
-    // ... update resourceB ...
-  pthread_mutex_unlock(&lockB);
-pthread_mutex_unlock(&lockA);
-
-// Pattern for worker_BA (MUST still respect lock order!)
-pthread_mutex_lock(&lockA);  // NOT lockB first!
-  pthread_mutex_lock(&lockB);
-    // ... update resourceB ...
-  pthread_mutex_unlock(&lockB);
-  // ... update resourceA ...
-pthread_mutex_unlock(&lockA);
-
-// Pattern for monitor (consistent read)
-pthread_mutex_lock(&lockA);
-pthread_mutex_lock(&lockB);
-  int a = resourceA;
-  int b = resourceB;
-  // ... snapshot taken ...
-pthread_mutex_unlock(&lockB);
-pthread_mutex_unlock(&lockA);
-```
-
-> **💡 Hint:** Even though `worker_BA` logically wants to update B first, it must still acquire locks in order A→B. This ensures consistency and prevents deadlock.
+> **💡 Hint:** To avoid deadlock when multiple locks are needed, establish a consistent locking order across all threads. For example, always acquire `lockA` before `lockB`.
 
 ---
 
-## Testing
+## Task Testing
 
-### Build and Run
+### Environment
+- **Platform:** Unix/Linux (NOT xv6)
+- **Working directory:** `notxv6/`
+
+### Test Method 1: Manual Execution
 
 ```bash
 cd notxv6/
@@ -129,66 +102,153 @@ make pthread_locks
 ./pthread_locks
 ```
 
-### Expected Output
+#### Expected Output
 
 ```
 [monitor] A=29943 B=29943 total_ops=40000 done=0
 [monitor] A=60000 B=60000 total_ops=80000 done=0
 [monitor] A=60000 B=60000 total_ops=80000 done=1
 --- Results (returned to main) ---
-Thread 1 ops=40000 lastA=59248 lastB=59248 lastTotalOps=79248 lastDone=0
-Thread 2 ops=40000 lastA=60000 lastB=60000 lastTotalOps=80000 lastDone=0
+Thread 1 ops=40000 lastA=59248 lastB=59248 lastTotalOps=79248
+lastDone=0
+Thread 2 ops=40000 lastA=60000 lastB=60000 lastTotalOps=80000
+lastDone=0
 Thread 3 ops=0 lastA=60000 lastB=60000 lastTotalOps=80000 lastDone=1
 Final Shared: A=60000 B=60000 total_ops=80000 done=1
 Expected: total_ops=80000 done=1
 ```
 
-### Test with Optional Script
+### Test Method 2: Optional Shell Script
 
 ```bash
 ./optional_test
 ```
 
-This runs the binary 20 times to catch intermittent race conditions and deadlocks.
+- Runs the binary **20 times** to catch intermittent race conditions
+- Takes a few seconds to complete
+- Expected output: `PASS`
 
-### Test with Grade Script
+### Test Method 3: Grading Script
 
 ```bash
 cd ..
 ./grade-quiz pthread_locks
 ```
 
-Or with full make:
+**Expected output:**
+```
+== Test pthread_locks_test == 
+gcc -o pthread_locks -g -O2 -DSOL_THREAD -DLAB_THREAD notxv6/pthread_locks.c -pthread
+pthread_locks_test: OK (28.1s)
+```
+
+### Test Method 4: Full Make Grade
 
 ```bash
 make clean && make grade
 ```
 
-> **⚠️ Warning:** The grade script may not catch all possible issues. You must perform additional testing to ensure robustness. Run the program multiple times and under various conditions.
+**Expected output:**
+```
+== Test pthread_locks_test == 
+make[1]: Entering directory '/mnt/c/ICT1012/xv6labs-w8-quiz2/q2_instructor'
+gcc -o pthread_locks -g -O2 -DSOL_THREAD -DLAB_THREAD notxv6/pthread_locks.c -pthread
+pthread_locks_test: OK (28.1s)
+Score: 1/1
+```
+
+> **⚠️ Warning:** The grade script does NOT cover all edge cases! You are responsible for additional testing beyond the automated tests.
 
 ---
 
-## Submission Checklist
+## Key Implementation Insights
 
-- [ ] Fixed all race conditions with proper mutex locks/unlocks
-- [ ] Enforced consistent lock ordering (no deadlock)
-- [ ] Program runs without hanging
-- [ ] `make grade` passes
-- [ ] Tested with `optional_test` script successfully
-- [ ] Created zip file with `make zipball` (not Windows zip)
+### Locking Strategy
+
+To prevent deadlock while protecting multiple resources:
+
+1. **Establish a consistent lock order**
+   - Example: Always acquire `lockA` before `lockB`
+   - Reverse order when releasing: Release `lockB` before `lockA`
+
+2. **Identify critical sections**
+   - Any code that reads or modifies `resourceA` must hold `lockA`
+   - Any code that reads or modifies `resourceB` must hold `lockB`
+   - Any code that accesses both must acquire both locks in consistent order
+
+3. **Protect compound operations**
+   - If checking `done` and then modifying resources, must hold locks for entire sequence
+   - If reading for monitoring, snapshot all values under lock
+
+### Example Pattern
+
+```c
+// Safe multi-resource access
+pthread_mutex_lock(&lockA);
+pthread_mutex_lock(&lockB);
+
+// Modify resourceA and resourceB
+resourceA++;
+resourceB++;
+
+pthread_mutex_unlock(&lockB);
+pthread_mutex_unlock(&lockA);
+```
+
+---
+
+## Quiz Submission
+
+### Step 1: Prepare Your Submission
+
+After fixing the code and passing all tests:
+
+```bash
+make zipball
+```
+
+This creates `lab.zip` in the project root.
+
+> **⚠️ Warning:** Use `make zipball` command, NOT Windows Zip or iOS Files App, to avoid creating multiple hierarchical directories.
+
+### Step 2: Submit to Gradescope
+
+1. Navigate to Gradescope
+2. Find assignment: **"xsv6labs-quiz2-q2-pthread"**
+3. Upload your `lab.zip` file
+4. Autograder will run `make grade` for verification
+
+### Step 3: Important Notes
+
+- **Autograding is verification only** - Your score will NOT be included in the total score
+- **Regrade after deadline** - Different test cases will be used after the quiz deadline
+- **Submit early** - Avoid last-minute technical issues by submitting as early as possible
+- **Your testing responsibility** - Test cases may not cover all edge cases; ensure your code is robust
+
+---
+
+## Common Pitfalls to Avoid
+
+| Issue | Solution |
+|-------|----------|
+| Acquiring locks in different orders across threads | Establish one consistent lock order globally |
+| Forgetting to unlock after lock | Use matching lock/unlock pairs; consider using helper macros |
+| Holding locks longer than necessary | Minimize critical section size |
+| Partial reads without full lock coverage | Hold all necessary locks when reading multiple related variables |
+| Modifying shared variables outside locks | Identify ALL shared state and protect with locks |
+
+---
+
+## Summary Checklist
+
+- [ ] Downloaded `quiz2-q2.zip` from LMS
+- [ ] Identified all shared variables: `resourceA`, `resourceB`, `total_ops`, `done`
+- [ ] Established consistent lock acquisition order
+- [ ] Added `pthread_mutex_lock()` before accessing shared variables
+- [ ] Added `pthread_mutex_unlock()` after accessing shared variables
+- [ ] Tested with `./pthread_locks` - no crashes or hangs
+- [ ] Tested with `./optional_test` - all 20 runs pass
+- [ ] Tested with `./grade-quiz pthread_locks` - OK status
+- [ ] Tested with `make grade` - Score 1/1
+- [ ] Created `lab.zip` with `make zipball`
 - [ ] Submitted `lab.zip` to Gradescope
-- [ ] Performed additional manual testing beyond automated tests
-
-> **💡 Hint:** Submit early to the autograder for verification before the deadline. The autograder will regrade with different test cases after the due date.
-
----
-
-## Key Takeaways
-
-| Concept | Key Point |
-|---------|-----------|
-| **Lock Ordering** | Always acquire in same order; prevents circular wait |
-| **Deadlock Prevention** | Reverse release order; lock hierarchy must be total |
-| **Race Condition** | Protected every shared variable access with appropriate lock |
-| **Atomicity** | Monitor's snapshot must read both A and B under same lock set |
-| **Testing** | Run multiple times; race conditions are intermittent by nature |
