@@ -221,8 +221,7 @@ put(int key, int value)
 
 In `thread_switch`, why do we save/restore `s0`–`s11` but **not** `a0`–`a7` or `t0`–`t6`?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>RISC-V calling convention divides registers into two categories:</p>
 
@@ -242,8 +241,7 @@ Since threads yield at <code>thread_yield()</code> → <code>thread_schedule()</
 
 What would happen if `thread_create` set `t->ctx.sp` to the **beginning** of the stack array (lowest address) instead of the end?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>The stack would grow <strong>downward into memory that precedes the stack array</strong> — i.e., into either the previous thread's stack (if the threads are adjacent in <code>all_thread[]</code>) or into the code/data segment. This would corrupt memory and cause undefined behavior.</p>
 
@@ -259,8 +257,7 @@ What would happen if `thread_create` set `t->ctx.sp` to the **beginning** of the
 
 In the hash table, why is a single global mutex (one lock for the whole table) **correct** but **slower** than per-bucket locking? Give a scenario where per-bucket locking provides no speedup over a single global lock.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <strong>Correct but slow:</strong> A single global mutex serializes all <code>put()</code> operations, regardless of which bucket they target. With 2 threads, even if they would hash to different buckets (and thus never conflict), they still wait for each other. This eliminates parallelism.
 
@@ -278,8 +275,7 @@ In the hash table, why is a single global mutex (one lock for the whole table) *
 
 Add a fifth thread type `thread_d` to the uthread system that runs a "daemon" — it never exits but instead calls `thread_yield()` in an infinite loop. What happens when threads a, b, c finish and only the daemon is left? How would you modify the system to handle this gracefully?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>With the current scheduler, when a, b, c all set <code>state = FREE</code> and call <code>thread_schedule()</code>, the scheduler finds only the daemon (<code>RUNNABLE</code>) and switches to it. The daemon runs indefinitely — <code>thread_schedule: no runnable threads</code> is never printed.</p>
 
@@ -304,8 +300,7 @@ Option 1 is the most UNIX-like: it mirrors how the kernel tracks process count f
 
 The `ph` hash table uses a **linked list** per bucket for collision resolution. Describe how you would convert it to use **open addressing** (linear probing) instead. What changes would be needed to ensure thread safety with the per-bucket lock approach?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <strong>Open addressing replaces linked lists with a flat array:</strong>
 

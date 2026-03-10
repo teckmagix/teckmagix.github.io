@@ -350,8 +350,7 @@ entry("symlink");
 
 Why must you call `make clean` and rebuild `fs.img` after changing `NDIRECT` from 12 to 11?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <code>NDIRECT</code> determines the <strong>on-disk layout</strong> of every inode. The <code>dinode.addrs[]</code> array is stored directly on disk. Changing <code>NDIRECT</code> changes the size of this array:
 
@@ -371,8 +370,7 @@ Actually the concern is more subtle: the mkfs tool uses <code>NDIRECT</code> to 
 
 What would happen if `itrunc()` freed the doubly-indirect data blocks but forgot to call `bfree()` on the secondary map blocks themselves?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>The secondary map blocks (which hold 256 pointers each) would be leaked — they'd remain marked as "used" in the bitmap even though the file no longer references them. Over time:</p>
 
@@ -391,8 +389,7 @@ This is a <strong>block leak</strong>, analogous to a memory leak but for disk b
 
 A symlink `A` points to symlink `B`, which points back to `A`. Without the depth counter, what would happen when you `open("A")`? Trace through the kernel code.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>Without the depth counter, the while loop in <code>sys_open()</code> would run forever:</p>
 
@@ -416,8 +413,7 @@ In kernel space, this infinite loop would exhaust the <strong>kernel stack</stro
 
 Implement `readlink(const char *path, char *buf, int bufsize)` as a new xv6 system call. It should read the target of a symlink into `buf` without following it. What's the key difference from how `sys_open` handles symlinks?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <code>readlink</code> opens the symlink inode <strong>without following</strong> it (like <code>O_NOFOLLOW</code>), then reads its data:
 
@@ -450,8 +446,7 @@ sys_readlink(void)
 
 The doubly-indirect implementation adds 65,536 blocks. If you wanted to support a file up to 1 TB (assuming `BSIZE = 4096`), how many levels of indirection would you need? How would you design a **triply-indirect** block scheme?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <strong>Calculation:</strong>
 

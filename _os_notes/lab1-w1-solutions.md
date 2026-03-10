@@ -173,8 +173,7 @@ Modify `sleep` so that it accepts an **optional** second argument `unit` which c
 
 Example: `sleep 500 ms` should pause for 50 ticks.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <pre><code class="language-c">int
 main(int argc, char *argv[])
@@ -205,8 +204,7 @@ main(int argc, char *argv[])
 
 Add format character `'b'` to `memdump` that prints the **next byte in binary** (8 bits), e.g. the byte `0x41` ('A') should print `01000001`.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <pre><code class="language-c">case 'b': {
     unsigned char byte = *(unsigned char *)ptr;
@@ -229,8 +227,7 @@ Add format character `'b'` to `memdump` that prints the **next byte in binary** 
 
 Add format character `'a'` to `memdump` that prints the **next N bytes as a hex dump** (address offset + hex + ASCII), where N is given as the next character in the format string (a single decimal digit). For example, `"a4"` should hex-dump 4 bytes.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <pre><code class="language-c">case 'a': {
     f++;                         // consume the digit after 'a'
@@ -260,8 +257,7 @@ Add format character `'a'` to `memdump` that prints the **next N bytes as a hex 
 
 Extend `memdump` to handle format character `'r'` which repeats the *previous* format character N times, where N is an integer that follows in the format string (e.g. `"ir3"` means print one `i` then repeat the previous character `r` 3 times = total 4 ints).
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>The key trick is to remember the previous character and re-process it.</p>
 
@@ -285,8 +281,7 @@ memdump(char *fmt, char *data)
 
 What happens if you call `sleep` with a negative number like `sleep -5`? Explain the behavior and suggest a fix.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <code>atoi("-5")</code> returns <code>-5</code>. When <code>pause(-5)</code> is called, the xv6 kernel implementation of <code>sys_pause</code> likely casts it to an unsigned integer or checks <code><= 0</code> and returns immediately, so <code>sleep -5</code> effectively sleeps for 0 ticks.
 

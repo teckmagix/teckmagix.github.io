@@ -312,8 +312,7 @@ main(int argc, char *argv[])
 
 Why does `handshake` need **two** pipes instead of one? What would happen if you used a single pipe for both directions?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>A single pipe is <strong>unidirectional</strong> — data flows only one way (from writer to reader). If parent and child both wrote to and read from the same pipe:</p>
 
@@ -331,8 +330,7 @@ With two pipes: <code>p2c</code> carries data from parent to child; <code>c2p</c
 
 In `sniffer`, why does allocating memory with `sbrk()` give you pages that still contain the secret's data? Explain in terms of the kernel's memory allocator and the deliberate bug in this lab.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>Normally, <code>kalloc()</code> in <code>kernel/kalloc.c</code> calls <code>memset(mem, 5, PGSIZE)</code> before returning a page, filling it with garbage byte <code>0x05</code>. This prevents old data from leaking to a new process.</p>
 
@@ -350,8 +348,7 @@ In `sniffer`, why does allocating memory with `sbrk()` give you pages that still
 
 Modify `monitor` to also print the **system call arguments** for `SYS_write`. The `write` syscall takes `(int fd, char *buf, int n)`. Print: `<pid>: syscall write(fd=<fd>, n=<n>) -> <retval>`
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>You need to read the arguments from the trapframe <strong>before</strong> the syscall executes (because <code>a0</code> gets overwritten with the return value). Capture them in <code>syscall()</code>:</p>
 
@@ -374,8 +371,7 @@ int arg2 = p-&gt;trapframe-&gt;a2;   // third argument
 
 If `monitor` is called from a shell script that uses `exec` to replace itself with a new process, does the monitor mask persist? Explain what happens to `monitor_mask` when `exec` is called.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <strong>No, the mask does not persist across <code>exec</code>.</strong>
 
@@ -395,8 +391,7 @@ If `monitor` is called from a shell script that uses `exec` to replace itself wi
 
 Implement a `monitorlog` system call (similar to `monitor`) that writes trace output to a kernel ring buffer of 64 entries instead of immediately printing. Add a second `monitorread` system call that lets a user process read and clear the ring buffer.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <strong>Ring buffer in <code>kernel/monitor_log.c</code>:</strong>
 

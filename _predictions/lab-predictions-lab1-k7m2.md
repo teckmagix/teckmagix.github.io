@@ -12,8 +12,7 @@ description: "Exam predictions for Lab1-w3: handshake, sniffer, monitor."
 
 In <code>handshake.c</code>, why must both pipes be created <strong>before</strong> calling <code>fork()</code>?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Reason:</strong> <code>fork()</code> copies the parent's <strong>entire file descriptor table</strong> to the child. Pipes must exist before the fork so both processes share the same kernel buffers.</p>
 
@@ -40,8 +39,7 @@ int pid = fork();
 
 What does <code>fd[0]</code> and <code>fd[1]</code> represent in a pipe? Which end does the parent use to send a byte to the child?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Pipe file descriptor roles:</strong></p>
 <ul>
@@ -68,8 +66,7 @@ read(c2p[0],  &byte, 1);   // parent READS  via read  end [0]</code></pre>
 
 What happens when a process calls <code>read()</code> on a pipe that is currently empty but still has open write ends?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>The process <strong>blocks (sleeps)</strong> — the kernel puts it in a wait queue until data arrives.</p>
 
@@ -92,8 +89,7 @@ What happens when a process calls <code>read()</code> on a pipe that is currentl
 
 What does <code>monitor(1 &lt;&lt; SYS_read)</code> do? What integer value does it evaluate to if <code>SYS_read = 5</code>?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Step by step:</strong></p>
 <ol>
@@ -124,8 +120,7 @@ if ((p->monitor_mask >> num) & 1) {
 
 Why does <code>handshake.c</code> use <code>argv[1][0]</code> instead of <code>atoi(argv[1])</code> to get the byte to send?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>The compiler error problem:</strong></p>
 <ol>
@@ -153,8 +148,7 @@ write(p2c[1], &argv[1][0], 1);   // argv[1][0] is the first char of the arg stri
 
 Explain the "LIFO free page list" behaviour in xv6 and why <code>sbrk(8*4096)</code> in <code>sniffer.c</code> reliably returns the same pages that <code>secret.c</code> just freed.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>How xv6's memory allocator works (LIFO stack):</strong></p>
 <ol>
@@ -188,8 +182,7 @@ char *mem = sbrk(8 * 4096);  // request same size as secret used
 
 Why does <code>monitor_mask</code> survive across an <code>exec()</code> call, even though <code>exec()</code> replaces the process's code, data, and stack?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>What exec() replaces vs. what it keeps:</strong></p>
 
@@ -222,8 +215,7 @@ exec(argv[2], ...);   // replaces user code BUT struct proc survives
 
 Why does a simple ASCII scan fail to find the secret in <code>sniffer</code>? What is the correct approach?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Memory layout of secret.c's data array:</strong></p>
 <pre><code class="language-c">// secret.c writes TWO things into its data array:
@@ -262,8 +254,7 @@ for (int i = 0; i &lt; 8 * 4096 - 16; i++) {
 
 What changes must be made to <code>kfork()</code> in <code>kernel/proc.c</code> for the monitor syscall, and why?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>The one-line change:</strong></p>
 <pre><code class="language-c">// In kfork(), after: np->pid = alloc_pid();
@@ -298,8 +289,7 @@ np->monitor_mask = p->monitor_mask;</code></pre>
 
 Describe a scenario where <code>handshake</code> deadlocks if unused pipe ends are not closed. Trace which process blocks and why.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Setup — after fork(), both processes hold ALL 4 fds:</strong></p>
 <pre><code class="language-c">// After fork(), both parent AND child have:
@@ -335,8 +325,7 @@ close(c2p[1]);  // parent never writes to c2p
 
 In <code>monitor</code>, the print is added <strong>after</strong> calling the syscall handler. Why does this matter? What would go wrong if you printed before?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>What's in register a0 at each point:</strong></p>
 

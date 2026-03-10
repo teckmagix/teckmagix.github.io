@@ -12,8 +12,7 @@ description: "Exam predictions for Lab2-w5: uthread context switching and pthrea
 
 What is the purpose of the <code>ra</code> register in <code>thread_context</code>, and what value is it set to when a <strong>new</strong> thread is first created?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>What ra does in thread_switch:</strong></p>
 <ol>
@@ -44,8 +43,7 @@ What is the purpose of the <code>ra</code> register in <code>thread_context</cod
 
 Why must the stack pointer (<code>sp</code>) be initialised to the <strong>end</strong> (highest address) of the stack array, not the beginning?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>RISC-V stack direction — it grows DOWNWARD:</strong></p>
 <pre><code class="language-c">t->stack[0]              ← LOW address  (0x1000)
@@ -77,8 +75,7 @@ t->stack[STACK_SIZE-1]   ← HIGH address (0x1000 + STACK_SIZE)
 
 What is a race condition in the hash table? Give a concrete step-by-step example of two threads losing a key.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Race condition:</strong> Two threads read-modify-write the same data concurrently without a lock → one write silently overwrites the other.</p>
 
@@ -105,8 +102,7 @@ table[bucket] = new_entry;          // whoever writes LAST wins, first is lost</
 
 Why does <code>get()</code> not require a mutex lock even though the hash table is shared between threads?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Two reasons get() is safe without a lock:</strong></p>
 
@@ -138,8 +134,7 @@ Why does <code>get()</code> not require a mutex lock even though the hash table 
 
 Why do we save only <strong>callee-saved</strong> registers in <code>thread_switch</code>, not caller-saved ones like <code>a0–a7</code> or <code>t0–t6</code>?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>RISC-V calling convention — two categories:</strong></p>
 
@@ -172,8 +167,7 @@ sd s0,  16(a0)   /* s0-s11: long-lived variables */
 
 What is per-bucket locking and why is it faster than a single global lock?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Per-bucket locking — one mutex per bucket:</strong></p>
 <pre><code class="language-c">pthread_mutex_t bucket_locks[NBUCKET];  // 5 separate locks
@@ -210,8 +204,7 @@ void put(int key, int value) {
 
 Trace through exactly what happens when <code>thread_switch(old_ctx, new_ctx)</code> executes. What is the CPU state just before <code>ret</code>?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Phase 1 — SAVE (freeze old thread into RAM):</strong></p>
 <pre><code class="language-asm">sd ra,   0(a0)   /* save old thread's return address → RAM */
@@ -245,8 +238,7 @@ ld s0,  16(a1)   /* load s0-s11 from new thread's context */
 
 What is the correct order of lock, insert, and unlock in <code>put()</code>? Why does order matter?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Correct order:</strong></p>
 <pre><code class="language-c">void put(int key, int value) {
@@ -289,8 +281,7 @@ table[bucket] = new_entry;                // write with stale head → lost key<
 
 What would happen if <code>thread_create</code> set <code>sp</code> to <code>t-&gt;stack</code> (lowest address)? Describe the failure mode in detail.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Step-by-step failure trace:</strong></p>
 <ol>
@@ -322,8 +313,7 @@ all_thread[1].ctx                      // thread 1's context struct
 
 Implement the complete <code>thread_switch</code> assembly for RISC-V. Explain what each group of instructions accomplishes.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <pre><code class="language-asm">    .text
     .globl thread_switch
@@ -384,8 +374,7 @@ thread_switch:
 
 Thread A holds <code>lock[2]</code> and waits for <code>lock[3]</code>. Thread B holds <code>lock[3]</code> and waits for <code>lock[2]</code>. Identify the problem, explain why it can't happen in the current design, and propose two fixes for a redesign that does require two locks.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>The problem: DEADLOCK</strong></p>
 <ol>

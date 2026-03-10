@@ -324,8 +324,7 @@ piped through xargs — each `hello` line gets appended to the base command. The
 
 Instead of printing `"Hello from kernel syscall!"`, modify `sys_hello` to accept one integer argument (the caller's PID passed explicitly) and print `"Hello from PID <n>!"`. What xv6 kernel function do you use to read an integer argument inside a syscall handler?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>Use <code>argint(0, &pid)</code> to read the first integer argument:</p>
 
@@ -359,8 +358,7 @@ sys_hello(void)
 
 Modify `sixfive` to print numbers that are multiples of **any divisor passed as a command-line flag**. For example `sixfive -d 7 file.txt` prints multiples of 7. If `-d` is not given, default to printing multiples of 5 or 6.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <pre><code class="language-c">int
 main(int argc, char *argv[])
@@ -390,8 +388,7 @@ a b
 c
 ```
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>The key change: buffer up to <code>max</code> lines, then pass them all as arguments in one exec call.</p>
 
@@ -411,8 +408,7 @@ c
 
 Implement a `syscount` system call that returns the total number of system calls made by the calling process since it started. Where would you store the per-process counter in the xv6 kernel, and how would it be initialized?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <strong>Step 1:</strong> Add <code>int syscall_count;</code> to <code>struct proc</code> in <code>kernel/proc.h</code>.
 
@@ -448,8 +444,7 @@ sys_syscount(void)
 
 Explain why the `exec()` call in `xargs`'s child does **not** need to `free()` the `line` buffer before calling `exec`, even though `line` was allocated (on the stack) by the parent process.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p>When <code>exec()</code> succeeds, it <strong>replaces</strong> the entire address space of the current process with the new program. The old stack, heap, and data segments are discarded entirely. There is no "memory leak" because the OS reclaims every page of the old address space as part of the exec system call.</p>
 

@@ -12,8 +12,7 @@ description: "Exam predictions for Lab3-w8: doubly-indirect blocks and symbolic 
 
 What is the maximum file size in the <strong>original</strong> xv6 file system, and why is it limited?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Original inode layout — 13 slots total:</strong></p>
 <pre><code class="language-c">// kernel/fs.h (before lab)
@@ -43,8 +42,7 @@ struct dinode {
 
 After the Lab3 modification, how many total blocks can a file have? Show the full calculation.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>New inode layout — still 13 slots, but repurposed:</strong></p>
 <pre><code class="language-c">// After lab: NDIRECT = 11
@@ -70,8 +68,7 @@ After the Lab3 modification, how many total blocks can a file have? Show the ful
 
 What is a symbolic link and how does it differ from a regular file?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Regular file vs symbolic link:</strong></p>
 
@@ -98,8 +95,7 @@ writei(ip, 0, (uint64)target, 0, strlen(target));
 
 What does <code>brelse()</code> do and why must it always be called after <code>bread()</code>?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>What happens inside bread() and brelse():</strong></p>
 <ol>
@@ -135,8 +131,7 @@ brelse(bp);                    // IMMEDIATELY release — before any other bread
 
 In <code>bmap()</code>, given logical block number <code>bn = 500</code>, calculate <code>index1</code> and <code>index2</code> for the doubly-indirect section. Show each step.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Step 1 — Subtract direct range:</strong></p>
 <pre><code class="language-c">bn = 500
@@ -167,8 +162,7 @@ uint index2 = bn % NINDIRECT;  // 233 % 256 = 233 → use slot #233 in that map<
 
 Why must <code>struct inode</code> in <code>file.h</code> and <code>struct dinode</code> in <code>fs.h</code> always have the same number of elements in <code>addrs[]</code>?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>What each struct is for:</strong></p>
 <ul>
@@ -196,8 +190,7 @@ Why must <code>struct inode</code> in <code>file.h</code> and <code>struct dinod
 
 Explain <code>O_NOFOLLOW</code>. When would a user program use it, and what happens when opening a symlink without this flag?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>How O_NOFOLLOW works in sys_open():</strong></p>
 <pre><code class="language-c">// In sys_open(), the symlink-following loop:
@@ -233,8 +226,7 @@ while (ip->type == T_SYMLINK && !(omode &amp; O_NOFOLLOW)) {
 
 Why must the symlink-following loop in <code>sys_open()</code> be placed <strong>after</strong> <code>ilock(ip)</code> but <strong>before</strong> the directory check?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Reason 1 — Must be AFTER ilock(ip):</strong></p>
 <ol>
@@ -269,8 +261,7 @@ if (ip->type == T_SYMLINK ...)   // read type
 
 Write the complete doubly-indirect allocation logic for <code>bmap()</code> with all <code>balloc</code>, <code>bread</code>, <code>brelse</code>, and <code>log_write</code> calls. Explain each step.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <pre><code class="language-c">// In bmap(), after singly-indirect section:
 bn -= NINDIRECT;
@@ -331,8 +322,7 @@ panic("bmap: out of range");</code></pre>
 
 Write the doubly-indirect cleanup in <code>itrunc()</code>. What happens if you forget to <code>bfree</code> the Master Map block itself?
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Complete doubly-indirect itrunc() code:</strong></p>
 <pre><code class="language-c">// Add AFTER the singly-indirect section in itrunc():
@@ -388,8 +378,7 @@ if (ip->addrs[NDIRECT + 1]) {
 
 Symlink chain: A → B → A (circular). Without a depth limit, what happens? Implement the correct loop guard with proper <code>ilock</code>/<code>iunlockput</code> usage.
 
-<button class="answer-toggle">▼ Show Answer</button>
-<div class="answer-body">
+<div class="answer-content">
 
 <p><strong>Without depth limit — step-by-step infinite loop:</strong></p>
 <ol>
