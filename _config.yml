@@ -1,0 +1,28 @@
+title: "TeckMagix Docs"
+description: "ICT1012 OS lab solutions, study guides, and variation questions"
+baseurl: ""
+url: "https://teckmagix.github.io"
+
+theme: null
+markdown: kramdown
+highlighter: rouge
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+collections:
+  os_notes:
+    output: true
+    permalink: /os_notes/:name/
+
+defaults:
+  - scope:
+      path: ""
+      type: "os_notes"
+    values:
+      layout: "page"

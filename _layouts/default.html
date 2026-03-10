@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% if page.title %}{{ page.title }} — {% endif %}{{ site.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">⚡</div>
+      <div>
+        <div class="sidebar-title">TeckMagix Docs</div>
+        <div class="sidebar-sub">ICT1012 Operating Systems</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ '/' | relative_url }}" class="nav-item {% if page.url == '/' %}active{% endif %}">
+        🏠 Home
+      </a>
+
+      <div class="nav-section">📘 Lab 1 — Utilities</div>
+      {% assign lab1_notes = site.os_notes | where: "lab", "lab1" | sort: 'order' %}
+      {% for note in lab1_notes %}
+      <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
+        📄 {{ note.short_title | default: note.title }}
+      </a>
+      {% endfor %}
+
+      <div class="nav-section">📗 Lab 2 — Syscall & Threads</div>
+      {% assign lab2_notes = site.os_notes | where: "lab", "lab2" | sort: 'order' %}
+      {% for note in lab2_notes %}
+      <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
+        📄 {{ note.short_title | default: note.title }}
+      </a>
+      {% endfor %}
+
+      <div class="nav-section">📙 Lab 3 — File System</div>
+      {% assign lab3_notes = site.os_notes | where: "lab", "lab3" | sort: 'order' %}
+      {% for note in lab3_notes %}
+      <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
+        📄 {{ note.short_title | default: note.title }}
+      </a>
+      {% endfor %}
+
+      <div class="nav-section">📝 Other Notes</div>
+      {% assign other_notes = site.os_notes | where_exp: "n", "n.lab == nil" | sort: 'date' | reverse %}
+      {% for note in other_notes %}
+      <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
+        📄 {{ note.short_title | default: note.title }}
+      </a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+      <span class="breadcrumb">
+        <a href="{{ '/' | relative_url }}">Home</a>
+        {% if page.title %} / {{ page.title }}{% endif %}
+      </span>
+    </div>
+
+    <div class="content">
+      {% if page.title %}
+      <h1 class="page-title">{{ page.title }}</h1>
+      <div class="page-meta">
+        {% if page.date %}📅 {{ page.date | date: "%B %d, %Y" }}{% endif %}
+        {% if page.lab %}<span class="page-tag">{{ page.lab | upcase }}</span>{% endif %}
+        {% if page.week %}<span class="page-tag">Week {{ page.week }}</span>{% endif %}
+      </div>
+      {% endif %}
+
+      <div class="page-body">
+        {{ content }}
+      </div>
+    </div>
+
+    <footer>
+      <p>TeckMagix Docs · ICT1012 Operating Systems · <a href="https://teckmagix.github.io">teckmagix.github.io</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // Answer reveal toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.answer-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var body = this.nextElementSibling;
+          if (body && body.classList.contains('answer-body')) {
+            body.classList.toggle('open');
+            this.textContent = body.classList.contains('open')
+              ? '▲ Hide Answer'
+              : '▼ Show Answer';
+            if (body.classList.contains('open')) {
+              body.querySelectorAll('pre code').forEach(function(el) {
+                hljs.highlightElement(el);
+              });
+            }
+          }
+        });
+      });
+
+      // Close sidebar on outside click (mobile)
+      document.addEventListener('click', function(e) {
+        var sidebar = document.querySelector('.sidebar');
+        if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !e.target.classList.contains('menu-toggle')) {
+          sidebar.classList.remove('open');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
