@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% if page.title %}{{ page.title }} — {% endif %}{{ site.title }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <title>{% if page.title %}{{ page.title }} -- {% endif %}{{ site.title }}</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/tomorrow-night.min.css" />
@@ -12,90 +11,70 @@
 </head>
 <body>
 
-  <!-- ══ SIDEBAR ══ -->
   <aside class="sidebar" id="sidebar">
 
-    <!-- Fixed brand header -->
     <div class="sb-brand">
-      <span class="sb-logo">⚡</span>
+      <span class="sb-bolt">&#9889;</span>
       <div>
         <div class="sb-name">TeckMagix</div>
-        <div class="sb-sub">ICT1012 · OS</div>
+        <div class="sb-sub">ICT1012 &middot; OS</div>
       </div>
     </div>
 
-    <!-- Scrollable nav -->
     <nav class="sb-nav" id="sbNav">
 
-      <a href="{{ '/' | relative_url }}" class="sb-home {% if page.url == '/' %}is-active{% endif %}">
-        <span class="sb-home-icon">~</span> home
+      <a href="{{ '/' | relative_url }}" class="sb-home {% if page.url == '/' %}is-on{% endif %}">
+        <span class="sb-tilde">~</span> home
       </a>
 
-      <!-- Lab 1 -->
-      <div class="sb-section">
-        <button class="sb-section-btn" onclick="sbToggle(this)" aria-expanded="true">
-          <span class="sb-dot" style="background:#3B82F6"></span>
-          <span>Lab 1</span>
-          <span class="sb-arr">▾</span>
+      <div class="sb-group">
+        <button class="sb-hdr" onclick="sbToggle(this)">
+          <span class="sb-dot c-blue"></span><span>Lab 1</span><span class="sb-chevron">v</span>
         </button>
-        <div class="sb-section-items open">
+        <div class="sb-items is-open">
           {% assign lab1 = site.os_notes | where: "lab", "lab1" | sort: "order" %}
           {% for note in lab1 %}
-          <a href="{{ note.url | relative_url }}" class="sb-link {% if page.url == note.url %}is-active{% endif %}">
-            {{ note.short_title | default: note.title }}
-          </a>
+          <a href="{{ note.url | relative_url }}" class="sb-item {% if page.url == note.url %}is-on{% endif %}">{{ note.short_title | default: note.title }}</a>
           {% endfor %}
         </div>
       </div>
 
-      <!-- Lab 2 -->
-      <div class="sb-section">
-        <button class="sb-section-btn" onclick="sbToggle(this)" aria-expanded="true">
-          <span class="sb-dot" style="background:#10B981"></span>
-          <span>Lab 2</span>
-          <span class="sb-arr">▾</span>
+      <div class="sb-group">
+        <button class="sb-hdr" onclick="sbToggle(this)">
+          <span class="sb-dot c-green"></span><span>Lab 2</span><span class="sb-chevron">v</span>
         </button>
-        <div class="sb-section-items open">
+        <div class="sb-items is-open">
           {% assign lab2 = site.os_notes | where: "lab", "lab2" | sort: "order" %}
           {% for note in lab2 %}
-          <a href="{{ note.url | relative_url }}" class="sb-link {% if page.url == note.url %}is-active{% endif %}">
-            {{ note.short_title | default: note.title }}
-          </a>
+          <a href="{{ note.url | relative_url }}" class="sb-item {% if page.url == note.url %}is-on{% endif %}">{{ note.short_title | default: note.title }}</a>
           {% endfor %}
         </div>
       </div>
 
-      <!-- Lab 3 -->
-      <div class="sb-section">
-        <button class="sb-section-btn" onclick="sbToggle(this)" aria-expanded="true">
-          <span class="sb-dot" style="background:#F59E0B"></span>
-          <span>Lab 3</span>
-          <span class="sb-arr">▾</span>
+      <div class="sb-group">
+        <button class="sb-hdr" onclick="sbToggle(this)">
+          <span class="sb-dot c-amber"></span><span>Lab 3</span><span class="sb-chevron">v</span>
         </button>
-        <div class="sb-section-items open">
+        <div class="sb-items is-open">
           {% assign lab3 = site.os_notes | where: "lab", "lab3" | sort: "order" %}
           {% for note in lab3 %}
-          <a href="{{ note.url | relative_url }}" class="sb-link {% if page.url == note.url %}is-active{% endif %}">
-            {{ note.short_title | default: note.title }}
-          </a>
+          <a href="{{ note.url | relative_url }}" class="sb-item {% if page.url == note.url %}is-on{% endif %}">{{ note.short_title | default: note.title }}</a>
           {% endfor %}
         </div>
       </div>
 
-      <!-- Predictions -->
-      <div class="sb-section">
-        <button class="sb-section-btn" onclick="sbToggle(this)" aria-expanded="false">
-          <span class="sb-dot" style="background:#8B5CF6"></span>
+      <div class="sb-group">
+        <button class="sb-hdr" onclick="sbToggle(this)">
+          <span class="sb-dot c-purple"></span>
           <span>Predictions</span>
-          {% assign pc = site.predictions | size %}{% if pc > 0 %}<span class="sb-count">{{ pc }}</span>{% endif %}
-          <span class="sb-arr">▾</span>
+          {% assign pc = site.predictions | size %}
+          {% if pc > 0 %}<span class="sb-badge">{{ pc }}</span>{% endif %}
+          <span class="sb-chevron">v</span>
         </button>
-        <div class="sb-section-items">
+        <div class="sb-items">
           {% assign preds = site.predictions | sort: "title" %}
           {% for pred in preds %}
-          <a href="{{ pred.url | relative_url }}" class="sb-link {% if page.url == pred.url %}is-active{% endif %}">
-            {{ pred.title | remove: "Lab Predictions - " }}
-          </a>
+          <a href="{{ pred.url | relative_url }}" class="sb-item {% if page.url == pred.url %}is-on{% endif %}">{{ pred.title | remove: "Lab Predictions - " }}</a>
           {% endfor %}
         </div>
       </div>
@@ -105,88 +84,74 @@
     <div class="sb-foot">AY 2025/26</div>
   </aside>
 
-  <!-- ══ MAIN ══ -->
-  <div class="main-wrap">
+  <div class="site-main">
 
-    <!-- Topbar -->
     <header class="topbar">
-      <button class="mob-btn" id="mobBtn" aria-label="menu">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M1 2.5h14M1 8h14M1 13.5h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+      <button class="mob-btn" id="mobBtn">
+        <span></span><span></span><span></span>
       </button>
-      <div class="topbar-path">
+      <div class="tb-path">
         <a href="{{ '/' | relative_url }}">~</a>
-        {% if page.title %}<span>/</span><span class="tp-cur">{{ page.title }}</span>{% endif %}
+        {% if page.title %}<span class="tb-sep">/</span><span class="tb-page">{{ page.title }}</span>{% endif %}
       </div>
-      {% if page.lab %}<span class="topbar-lab">{{ page.lab | upcase }}</span>{% endif %}
+      {% if page.lab %}<span class="tb-lab">{{ page.lab | upcase }}</span>{% endif %}
     </header>
 
-    <!-- Page -->
-    <main class="main-content">
+    <main class="pg-wrap">
 
       {% if page.title %}
-      <div class="pg-header">
-        <div class="pg-prompt">
-          <span class="pg-caret">&gt;</span>
-          <h1 class="pg-title">{{ page.title }}</h1>
-        </div>
-        <div class="pg-tags">
-          {% if page.lab %}<span class="tag tag-lab">{{ page.lab }}</span>{% endif %}
-          {% if page.week %}<span class="tag">w{{ page.week }}</span>{% endif %}
-          {% if page.collection == "predictions" %}<span class="tag tag-pred">🔮 prediction</span>{% endif %}
+      <div class="pg-head">
+        <h1 class="pg-title"><span class="pg-caret">&gt;</span> {{ page.title }}</h1>
+        <div class="pg-meta">
+          {% if page.lab %}<span class="chip chip-lab">{{ page.lab }}</span>{% endif %}
+          {% if page.week %}<span class="chip">week {{ page.week }}</span>{% endif %}
+          {% if page.collection == "predictions" %}<span class="chip chip-pred">prediction</span>{% endif %}
           {% if page.description %}<span class="pg-desc">// {{ page.description }}</span>{% endif %}
         </div>
       </div>
       {% endif %}
 
-      <div class="pg-body">
-        {{ content }}
-      </div>
+      <div class="pg-body">{{ content }}</div>
+
     </main>
 
     <footer class="site-foot">
-      <span class="sf-prompt">$</span> teckmagix.github.io &nbsp;·&nbsp; ICT1012 OS &nbsp;·&nbsp; <a href="https://teckmagix.github.io">teckmagix.github.io</a>
+      <span class="foot-prompt">$</span>
+      teckmagix.github.io &nbsp;&middot;&nbsp; ICT1012 OS &nbsp;&middot;&nbsp;
+      <a href="https://teckmagix.github.io">teckmagix.github.io</a>
     </footer>
+
   </div>
 
-  <!-- Mobile overlay -->
-  <div class="mob-overlay" id="mobOverlay"></div>
+  <div class="mob-veil" id="mobVeil"></div>
 
   <script>
-  (function(){
+  (function() {
     var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('mobOverlay');
-    var mobBtn  = document.getElementById('mobBtn');
+    var veil    = document.getElementById('mobVeil');
+    var btn     = document.getElementById('mobBtn');
 
-    function open()  { sidebar.classList.add('is-open'); overlay.classList.add('show'); }
-    function close() { sidebar.classList.remove('is-open'); overlay.classList.remove('show'); }
-    if(mobBtn)  mobBtn.addEventListener('click', function(){ sidebar.classList.contains('is-open') ? close() : open(); });
-    if(overlay) overlay.addEventListener('click', close);
+    function openSb()  { sidebar.classList.add('is-open'); veil.classList.add('show'); }
+    function closeSb() { sidebar.classList.remove('is-open'); veil.classList.remove('show'); }
+    if (btn)  btn.addEventListener('click', function() { sidebar.classList.contains('is-open') ? closeSb() : openSb(); });
+    if (veil) veil.addEventListener('click', closeSb);
 
-    window.sbToggle = function(btn){
-      var items = btn.nextElementSibling;
-      var arr   = btn.querySelector('.sb-arr');
-      var open  = items.classList.toggle('open');
-      btn.setAttribute('aria-expanded', open);
-      arr.textContent = open ? '▾' : '▸';
+    window.sbToggle = function(hdr) {
+      var items = hdr.nextElementSibling;
+      var ch    = hdr.querySelector('.sb-chevron');
+      var open  = items.classList.toggle('is-open');
+      if (ch) ch.textContent = open ? 'v' : '>';
     };
 
-    // Auto-open group of active link + scroll it into view
-    document.querySelectorAll('.sb-link.is-active').forEach(function(link){
-      var section = link.closest('.sb-section-items');
-      if(section){
-        section.classList.add('open');
-        var btn = section.previousElementSibling;
-        if(btn){ btn.setAttribute('aria-expanded','true'); var a = btn.querySelector('.sb-arr'); if(a) a.textContent='▾'; }
-      }
-      setTimeout(function(){ link.scrollIntoView({ block:'nearest', behavior:'smooth' }); }, 80);
+    /* auto-open group containing active page + scroll it into view */
+    document.querySelectorAll('.sb-item.is-on').forEach(function(link) {
+      var grp = link.closest('.sb-items');
+      if (grp) grp.classList.add('is-open');
+      setTimeout(function() { link.scrollIntoView({ block: 'nearest' }); }, 60);
     });
 
-    document.addEventListener('DOMContentLoaded', function(){
-      document.querySelectorAll('pre code').forEach(function(el){ hljs.highlightElement(el); });
-    });
-    hljs.highlightAll();
+    /* syntax highlighting */
+    document.querySelectorAll('pre code').forEach(function(el) { hljs.highlightElement(el); });
   })();
   </script>
 
