@@ -12,7 +12,7 @@
   --line2:    #2a2a2a;
   --fg:       #e8e8e8;
   --fg2:      #a0a0a0;
-  --fg3:      #505050;
+  --fg3:      #707070;
   --green:    #00ff88;
   --g-dim:    rgba(0,255,136,0.08);
   --g-faint:  rgba(0,255,136,0.04);
@@ -106,7 +106,7 @@ body {
   align-items: center;
   gap: 7px;
   padding: 8px 14px;
-  color: var(--fg3);
+  color: #909090;
   text-decoration: none;
   font-size: 12px;
   transition: color 0.12s;
@@ -127,7 +127,7 @@ body {
   padding: 6px 14px;
   background: none;
   border: none;
-  color: var(--fg3);
+  color: #909090;
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
@@ -137,7 +137,7 @@ body {
   transition: color 0.12s;
   text-align: left;
 }
-.sb-hdr:hover { color: var(--fg2); }
+.sb-hdr:hover { color: var(--fg); }
 .sb-hdr > span:nth-child(2) { flex: 1; }
 
 .sb-dot {
@@ -179,7 +179,7 @@ body {
 .sb-item {
   display: block;
   padding: 5px 14px 5px 28px;
-  color: var(--fg3);
+  color: #888888;
   text-decoration: none;
   font-size: 11.5px;
   line-height: 1.4;
@@ -190,7 +190,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sb-item:hover { color: var(--fg); border-left-color: var(--line2); }
+.sb-item:hover { color: #cccccc; border-left-color: var(--line2); }
 .sb-item.is-on {
   color: var(--green);
   border-left-color: var(--green);
