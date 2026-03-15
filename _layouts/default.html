@@ -4,31 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>{% if page.title %}{{ page.title }} -- {% endif %}{{ site.title }}</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="{{ '/assets/css/style.v5.css' | relative_url }}"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/tomorrow-night.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ '/assets/css/style.v6.css' | relative_url }}"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <style>
-/* Critical inline fallback - forces correct layout even if external CSS is stale */
-.sidebar{width:258px;height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;background:#090909;border-right:1px solid #202020;z-index:400}
-.sb-top{flex-shrink:0;display:flex;align-items:center;gap:11px;padding:16px 14px 14px;border-bottom:1px solid #202020}
-.sb-nav{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:8px 0 12px}
-.sb-home{display:flex;align-items:center;gap:8px;padding:8px 16px;color:#999;font-size:12px;text-decoration:none;margin-bottom:8px}
-.sb-lbl{display:flex;align-items:center;gap:7px;padding:5px 14px;color:#999;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;user-select:none}
+.sidebar{width:260px;height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;background:#ffffff;border-right:1px solid #e5e7eb;z-index:400}
+.sb-top{flex-shrink:0;display:flex;align-items:center;gap:11px;padding:18px 16px 16px;border-bottom:1px solid #e5e7eb}
+.sb-nav{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:10px 0 16px}
+.sb-home{display:flex;align-items:center;gap:8px;padding:8px 16px;color:#6b7280;font-size:13px;text-decoration:none;margin-bottom:6px}
+.sb-lbl{display:flex;align-items:center;gap:7px;padding:6px 16px;color:#9ca3af;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;user-select:none}
 .sb-lbl>span:nth-child(2){flex:1}
-.sb-kids{display:none;padding:2px 0 4px 0}
+.sb-kids{display:none;padding:2px 0 6px 0}
 .sb-kids.open{display:block !important}
-.sb-kid{display:block !important;padding:5px 14px 5px 30px;color:#888;font-size:11.5px;text-decoration:none;border-left:2px solid transparent;margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sb-kid.on{color:#00ff88 !important;border-left-color:#00ff88 !important;white-space:normal}
-.sb-kid:hover{color:#ccc}
-.sb-foot{flex-shrink:0;border-top:1px solid #202020;padding:8px 14px;font-size:9px;color:#666}
-.wrap{margin-left:258px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
-.topbar{height:48px;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:1px solid #202020;background:rgba(0,0,0,.97);position:sticky;top:0;z-index:200}
-.veil{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:399;opacity:0;transition:opacity .2s}
+.sb-kid{display:block !important;padding:6px 16px 6px 32px;color:#6b7280;font-size:12.5px;text-decoration:none;border-left:2px solid transparent;margin-left:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-kid.on{color:#2563eb !important;border-left-color:#2563eb !important;background:#eff6ff;white-space:normal}
+.sb-kid:hover{color:#111827;background:#f9fafb}
+.sb-foot{flex-shrink:0;border-top:1px solid #e5e7eb;padding:10px 16px;font-size:10px;color:#d1d5db}
+.wrap{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+.topbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 28px;border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,.97);position:sticky;top:0;z-index:200}
+.veil{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:399;opacity:0;transition:opacity .2s}
 .veil.show{opacity:1}
-.dot{display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.blue{background:#60a5fa}.teal{background:#34d399}.amber{background:#fbbf24}.purple{background:#a78bfa}
-.green{color:#00ff88}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.accent{color:#2563eb}
 @media(max-width:800px){.sidebar{transform:translateX(-100%)}.sidebar.show{transform:translateX(0)}.wrap{margin-left:0}.mBtn{display:flex !important}.veil{display:block}}
 </style>
 </head>
@@ -47,12 +45,13 @@
   <nav id="sbNav" class="sb-nav">
 
     <a href="{{ '/' | relative_url }}" class="sb-home {% if page.url == '/' %}on{% endif %}">
-      <span class="green">~</span> home
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="opacity:.6;flex-shrink:0"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5v-4h2v4H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/></svg>
+      Home
     </a>
 
     <div class="sb-sec">
       <div class="sb-lbl" onclick="tog(this)">
-        <span class="dot blue"></span><span>Lab 1</span><span class="arr">v</span>
+        <span class="dot" style="background:#3b82f6"></span><span>Lab 1</span><span class="arr">&#8964;</span>
       </div>
       <div class="sb-kids open">
         {% assign lab1 = site.os_notes | where: "lab", "lab1" | sort: "order" %}
@@ -64,7 +63,7 @@
 
     <div class="sb-sec">
       <div class="sb-lbl" onclick="tog(this)">
-        <span class="dot teal"></span><span>Lab 2</span><span class="arr">v</span>
+        <span class="dot" style="background:#10b981"></span><span>Lab 2</span><span class="arr">&#8964;</span>
       </div>
       <div class="sb-kids open">
         {% assign lab2 = site.os_notes | where: "lab", "lab2" | sort: "order" %}
@@ -76,7 +75,7 @@
 
     <div class="sb-sec">
       <div class="sb-lbl" onclick="tog(this)">
-        <span class="dot amber"></span><span>Lab 3</span><span class="arr">v</span>
+        <span class="dot" style="background:#f59e0b"></span><span>Lab 3</span><span class="arr">&#8964;</span>
       </div>
       <div class="sb-kids open">
         {% assign lab3 = site.os_notes | where: "lab", "lab3" | sort: "order" %}
@@ -88,10 +87,10 @@
 
     <div class="sb-sec">
       <div class="sb-lbl" onclick="tog(this)">
-        <span class="dot purple"></span>
+        <span class="dot" style="background:#8b5cf6"></span>
         <span>Predictions</span>
         {% assign pc = site.predictions | size %}{% if pc > 0 %}<span class="sb-badge">{{ pc }}</span>{% endif %}
-        <span class="arr">v</span>
+        <span class="arr">&#8964;</span>
       </div>
       <div class="sb-kids">
         {% assign preds = site.predictions | sort: "title" %}
@@ -113,8 +112,8 @@
       <div></div><div></div><div></div>
     </div>
     <div class="tbpath">
-      <a href="{{ '/' | relative_url }}" class="green">~</a>
-      {% if page.title %}<span class="dim"> / </span><span class="soft">{{ page.title }}</span>{% endif %}
+      <a href="{{ '/' | relative_url }}" class="accent">Home</a>
+      {% if page.title %}<span class="tbsep">/</span><span class="tbcur">{{ page.title }}</span>{% endif %}
     </div>
     {% if page.lab %}<span class="tblabel">{{ page.lab | upcase }}</span>{% endif %}
   </header>
@@ -123,12 +122,12 @@
 
     {% if page.title %}
     <div class="pghead">
-      <h1 class="pgtitle"><span class="green">&gt;</span> {{ page.title }}</h1>
+      <h1 class="pgtitle">{{ page.title }}</h1>
       <div class="pgmeta">
-        {% if page.lab %}<span class="chip clab">{{ page.lab }}</span>{% endif %}
-        {% if page.week %}<span class="chip">week {{ page.week }}</span>{% endif %}
-        {% if page.collection == "predictions" %}<span class="chip cpred">prediction</span>{% endif %}
-        {% if page.description %}<span class="pgdesc">// {{ page.description }}</span>{% endif %}
+        {% if page.lab %}<span class="chip clab">{{ page.lab | upcase }}</span>{% endif %}
+        {% if page.week %}<span class="chip">Week {{ page.week }}</span>{% endif %}
+        {% if page.collection == "predictions" %}<span class="chip cpred">Prediction</span>{% endif %}
+        {% if page.description %}<span class="pgdesc">{{ page.description }}</span>{% endif %}
       </div>
     </div>
     {% endif %}
@@ -138,8 +137,7 @@
   </main>
 
   <footer class="foot">
-    <span class="green">$</span>
-    teckmagix &nbsp;&middot;&nbsp; ICT1012 OS &nbsp;&middot;&nbsp;
+    TeckMagix &nbsp;&middot;&nbsp; ICT1012 Operating Systems &nbsp;&middot;&nbsp;
     <a href="https://teckmagix.github.io">teckmagix.github.io</a>
   </footer>
 
@@ -153,10 +151,10 @@ function tog(lbl) {
   var arr = lbl.querySelector('.arr');
   if (kids.classList.contains('open')) {
     kids.classList.remove('open');
-    arr.textContent = '>';
+    arr.innerHTML = '&#8250;';
   } else {
     kids.classList.add('open');
-    arr.textContent = 'v';
+    arr.innerHTML = '&#8964;';
   }
 }
 function mbTog() {
@@ -167,7 +165,6 @@ function mbClose() {
   document.getElementById('sidebar').classList.remove('show');
   document.getElementById('veil').classList.remove('show');
 }
-// Auto-open group of active link and scroll into view
 (function() {
   var active = document.querySelector('.sb-kid.on');
   if (active) {
@@ -175,7 +172,7 @@ function mbClose() {
     if (kids) {
       kids.classList.add('open');
       var arr = kids.previousElementSibling && kids.previousElementSibling.querySelector('.arr');
-      if (arr) arr.textContent = 'v';
+      if (arr) arr.innerHTML = '&#8964;';
     }
     setTimeout(function() { active.scrollIntoView({ block: 'nearest' }); }, 100);
   }
