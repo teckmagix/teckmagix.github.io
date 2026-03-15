@@ -4,91 +4,156 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% if page.title %}{{ page.title }} — {% endif %}{{ site.title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
 </head>
 <body>
-  <div class="sidebar">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Fixed header — never scrolls -->
     <div class="sidebar-header">
-      <div class="sidebar-logo">⚡</div>
-      <div>
-        <div class="sidebar-title">TeckMagix Docs</div>
-        <div class="sidebar-sub">ICT1012 Operating Systems</div>
+      <div class="sidebar-brand">
+        <span class="sidebar-logo">⚡</span>
+        <div>
+          <div class="sidebar-title">TeckMagix</div>
+          <div class="sidebar-sub">ICT1012 · Operating Systems</div>
+        </div>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <a href="{{ '/' | relative_url }}" class="nav-item {% if page.url == '/' %}active{% endif %}">
-        🏠 Home
+    <!-- Scrollable nav body -->
+    <nav class="sidebar-nav" id="sidebar-nav">
+
+      <a href="{{ '/' | relative_url }}" class="nav-home {% if page.url == '/' %}active{% endif %}">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146z"/></svg>
+        Home
       </a>
 
       <!-- LAB 1 -->
-      <div class="nav-section">📘 Lab 1</div>
-      {% assign lab1 = site.os_notes | where: "lab", "lab1" | sort: "order" %}
-      {% for note in lab1 %}
-      <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
-        📄 {{ note.short_title | default: note.title }}
-      </a>
-      {% endfor %}
+      <div class="nav-group">
+        <button class="nav-group-header" onclick="toggleGroup(this)">
+          <span class="nav-group-icon">📘</span>
+          <span>Lab 1</span>
+          <svg class="nav-chevron" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+        </button>
+        <div class="nav-group-items open">
+          {% assign lab1 = site.os_notes | where: "lab", "lab1" | sort: "order" %}
+          {% for note in lab1 %}
+          <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
+            {{ note.short_title | default: note.title }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
 
       <!-- LAB 2 -->
-      <div class="nav-section">📗 Lab 2</div>
-      {% assign lab2 = site.os_notes | where: "lab", "lab2" | sort: "order" %}
-      {% for note in lab2 %}
-      <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
-        📄 {{ note.short_title | default: note.title }}
-      </a>
-      {% endfor %}
+      <div class="nav-group">
+        <button class="nav-group-header" onclick="toggleGroup(this)">
+          <span class="nav-group-icon">📗</span>
+          <span>Lab 2</span>
+          <svg class="nav-chevron" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+        </button>
+        <div class="nav-group-items open">
+          {% assign lab2 = site.os_notes | where: "lab", "lab2" | sort: "order" %}
+          {% for note in lab2 %}
+          <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
+            {{ note.short_title | default: note.title }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
 
       <!-- LAB 3 -->
-      <div class="nav-section">📙 Lab 3</div>
-      {% assign lab3 = site.os_notes | where: "lab", "lab3" | sort: "order" %}
-      {% for note in lab3 %}
-      <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
-        📄 {{ note.short_title | default: note.title }}
-      </a>
-      {% endfor %}
-
-      <!-- PREDICTIONS -->
-      <div class="nav-section">🔮 Predictions
-        {% assign pred_count = site.predictions | size %}
-        {% if pred_count > 0 %}
-        <span class="nav-badge">{{ pred_count }}</span>
-        {% endif %}
+      <div class="nav-group">
+        <button class="nav-group-header" onclick="toggleGroup(this)">
+          <span class="nav-group-icon">📙</span>
+          <span>Lab 3</span>
+          <svg class="nav-chevron" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+        </button>
+        <div class="nav-group-items open">
+          {% assign lab3 = site.os_notes | where: "lab", "lab3" | sort: "order" %}
+          {% for note in lab3 %}
+          <a href="{{ note.url | relative_url }}" class="nav-item {% if page.url == note.url %}active{% endif %}">
+            {{ note.short_title | default: note.title }}
+          </a>
+          {% endfor %}
+        </div>
       </div>
-      {% assign preds = site.predictions | sort: "title" %}
-      {% for pred in preds %}
-      <a href="{{ pred.url | relative_url }}" class="nav-item {% if page.url == pred.url %}active{% endif %}">
-        🔮 {{ pred.title }}
-      </a>
-      {% endfor %}
-      {% if preds.size == 0 %}
-      <div class="nav-item" style="opacity:0.4; cursor:default; font-size:12px;">No predictions yet</div>
-      {% endif %}
+
+      <!-- PREDICTIONS — collapsible, starts closed to save space -->
+      <div class="nav-group">
+        <button class="nav-group-header" onclick="toggleGroup(this)">
+          <span class="nav-group-icon">🔮</span>
+          <span>Predictions</span>
+          {% assign pred_count = site.predictions | size %}
+          {% if pred_count > 0 %}
+          <span class="nav-badge">{{ pred_count }}</span>
+          {% endif %}
+          <svg class="nav-chevron" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+        </button>
+        <div class="nav-group-items">
+          {% assign preds = site.predictions | sort: "title" %}
+          {% for pred in preds %}
+          <a href="{{ pred.url | relative_url }}" class="nav-item {% if page.url == pred.url %}active{% endif %}">
+            {{ pred.title | remove: "Lab Predictions - " }}
+          </a>
+          {% endfor %}
+          {% if preds.size == 0 %}
+          <div class="nav-empty">No predictions yet</div>
+          {% endif %}
+        </div>
+      </div>
 
     </nav>
-  </div>
 
-  <div class="main">
-    <div class="topbar">
-      <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
-      <span class="breadcrumb">
-        <a href="{{ '/' | relative_url }}">Home</a>
-        {% if page.title %} / {{ page.title }}{% endif %}
-      </span>
+    <!-- Bottom version stamp -->
+    <div class="sidebar-footer">
+      <span>AY 2025/26</span>
     </div>
 
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 12a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0-4a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0-4a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11z"/></svg>
+      </button>
+      <div class="breadcrumb">
+        <a href="{{ '/' | relative_url }}">Home</a>
+        {% if page.title %}
+        <span class="bc-sep">/</span>
+        <span class="bc-current">{{ page.title }}</span>
+        {% endif %}
+      </div>
+      <div class="topbar-right">
+        {% if page.lab %}<span class="topbar-tag">{{ page.lab | upcase }}</span>{% endif %}
+      </div>
+    </header>
+
+    <!-- Page content -->
     <div class="content">
       {% if page.title %}
-      <h1 class="page-title">{{ page.title }}</h1>
-      <div class="page-meta">
-        {% if page.lab %}<span class="page-tag">{{ page.lab | upcase }}</span>{% endif %}
-        {% if page.week %}<span class="page-tag">Week {{ page.week }}</span>{% endif %}
-        {% if page.layout == "page" and page.collection == "predictions" %}
-        <span class="page-tag" style="background:rgba(188,140,255,0.1);color:var(--purple);border-color:rgba(188,140,255,0.2);">🔮 Prediction</span>
-        {% endif %}
+      <div class="page-header">
+        <h1 class="page-title">{{ page.title }}</h1>
+        <div class="page-meta">
+          {% if page.lab %}<span class="meta-chip chip-lab">{{ page.lab | upcase }}</span>{% endif %}
+          {% if page.week %}<span class="meta-chip">Week {{ page.week }}</span>{% endif %}
+          {% if page.collection == "predictions" %}
+          <span class="meta-chip chip-pred">🔮 Prediction</span>
+          {% endif %}
+          {% if page.description %}
+          <span class="meta-desc">{{ page.description }}</span>
+          {% endif %}
+        </div>
       </div>
       {% endif %}
 
@@ -97,34 +162,61 @@
       </div>
     </div>
 
-    <footer>
-      <p>TeckMagix Docs · ICT1012 Operating Systems · <a href="https://teckmagix.github.io">teckmagix.github.io</a></p>
+    <footer class="site-footer">
+      TeckMagix Docs &nbsp;·&nbsp; ICT1012 Operating Systems &nbsp;·&nbsp;
+      <a href="https://teckmagix.github.io">teckmagix.github.io</a>
     </footer>
+
   </div>
 
+  <!-- Mobile overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Answer reveal toggle
-      document.querySelectorAll('.answer-toggle').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var body = this.nextElementSibling;
-          if (body && body.classList.contains('answer-body')) {
-            body.classList.toggle('open');
-            this.textContent = body.classList.contains('open') ? '▲ Hide Answer' : '▼ Show Answer';
-            if (body.classList.contains('open')) {
-              body.querySelectorAll('pre code').forEach(function(el) { hljs.highlightElement(el); });
-            }
-          }
-        });
-      });
-      // Close sidebar on mobile outside click
-      document.addEventListener('click', function(e) {
-        var sidebar = document.querySelector('.sidebar');
-        if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !e.target.classList.contains('menu-toggle')) {
-          sidebar.classList.remove('open');
-        }
-      });
+  (function() {
+    // ── Sidebar toggle ──
+    var sidebar   = document.getElementById('sidebar');
+    var overlay   = document.getElementById('sidebarOverlay');
+    var menuBtn   = document.getElementById('menuToggle');
+
+    function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('show'); }
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+
+    if (menuBtn)  menuBtn.addEventListener('click', function() {
+      sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     });
+    if (overlay)  overlay.addEventListener('click', closeSidebar);
+
+    // ── Collapse/expand nav groups ──
+    window.toggleGroup = function(btn) {
+      var items = btn.nextElementSibling;
+      var chevron = btn.querySelector('.nav-chevron');
+      items.classList.toggle('open');
+      chevron.classList.toggle('rotated');
+    };
+
+    // Auto-open the group containing the active link
+    document.querySelectorAll('.nav-item.active').forEach(function(link) {
+      var group = link.closest('.nav-group-items');
+      if (group) {
+        group.classList.add('open');
+        var chevron = group.previousElementSibling.querySelector('.nav-chevron');
+        if (chevron) chevron.classList.add('rotated');
+      }
+    });
+
+    // ── Scroll active nav item into view ──
+    var activeLink = document.querySelector('.sidebar-nav .nav-item.active');
+    if (activeLink) {
+      activeLink.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    // ── Highlight.js ──
+    document.querySelectorAll('pre code').forEach(function(el) {
+      hljs.highlightElement(el);
+    });
+  })();
   </script>
+
 </body>
 </html>
